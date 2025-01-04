@@ -158,7 +158,7 @@ class _PlayerCard extends State<PlayerCard> {
           children: [
             Expanded(
               child: TextButton(
-                onPressed: () => print("Foo"),
+                onPressed: () => {},
                 onLongPress: () => setState(() => isEditable = !isEditable),
                 autofocus: false,
                 child: Builder(builder: (context) {
