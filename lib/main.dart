@@ -19,27 +19,78 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         ),
-        home: const MyHomePage(),
+        home: const TopBar(),
       ),
     );
   }
 }
 
 class MyAppState extends ChangeNotifier {
-  var players = [Player("Ben"), Player("Gijs"), Player("Rowan"), Player("Stijn"), Player("Stef")];
+  var players = [Player(name: "Ben"), Player(name: "Gijs"), Player(name: "Rowan"), Player(name: "Stef"), Player(name: "Stijn")];
+
+  void addPlayer(name) {
+    players.add(Player(name: name));
+    sortPlayers();
+    notifyListeners();
+  }
+
+  void removePlayer(player) {
+    players.remove(player);
+    notifyListeners();
+  }
 
   void addScore(player) {
     if (players.contains(player)) {
-      player.score++;
+      player.addScore();
+      sortPlayers();
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   void subtractScore(player) {
     if (players.contains(player)) {
-      player.score--;
+      player.subtractScore();
+      sortPlayers();
+      notifyListeners();
     }
+  }
+
+  void sortPlayers() {
+    players.sort((a, b) {
+      if (b.isDead() != a.isDead()) {
+        return b.isDead() ? -1 : 1;
+      } else {
+        return a.name.compareTo(b.name);
+      }
+    });
+  }
+
+  void updatePlayerName(player, name) {
+    player.name = name;
     notifyListeners();
+  }
+}
+
+class TopBar extends StatelessWidget {
+  const TopBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Toepen'),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.person_add_alt_1),
+            tooltip: 'Add player',
+            onPressed: () => appState.addPlayer(""),
+          ),
+        ],
+      ),
+      body: const MyHomePage()
+    );
   }
 }
 
@@ -64,23 +115,36 @@ class MyHomePage extends StatelessWidget {
   }
 }
 
-class PlayerCard extends StatelessWidget {
+class PlayerCard extends StatefulWidget {
+  final Player player;
+
   const PlayerCard({
     super.key,
     required this.player,
   });
 
-  final Player player;
+  @override
+  State<StatefulWidget> createState() => _PlayerCard();
+}
+
+
+class _PlayerCard extends State<PlayerCard> {
+  var isEditable = false;
 
   @override
   Widget build(BuildContext context) {
+    var player = widget.player;
+    var textEditingController = TextEditingController(text: player.name);
+
     final theme = Theme.of(context);
-    final style = theme.textTheme.displayMedium!.copyWith(
-      color: theme.colorScheme.onPrimary,
-      fontSize: 30
+    final nameStyle = theme.textTheme.displayMedium!.copyWith(
+      color: player.isDead() ? Colors.red : player.hasPoverty() ? Colors.yellow : theme.colorScheme.onPrimary,
+      fontSize: 30,
+      overflow: TextOverflow.fade
     );
-    final armoedeStyle = theme.textTheme.displayMedium!.copyWith(
-      color: Colors.yellow
+    final scoreStyle = theme.textTheme.displayMedium!.copyWith(
+      color: theme.colorScheme.onPrimary,
+      fontSize: 30,
     );
 
     var appState = context.watch<MyAppState>();
@@ -90,26 +154,74 @@ class PlayerCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(10),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(player.name, style: player.score < 14 ? style : armoedeStyle),
-            const Spacer(flex: 10),
-            Text('Score: ${player.score}', style: style),
-            const Spacer(flex: 1),
+            Expanded(
+              child: TextButton(
+                onPressed: () => print("Foo"),
+                onLongPress: () => setState(() => isEditable = !isEditable),
+                autofocus: false,
+                child: Builder(builder: (context) {
+                  if (isEditable || textEditingController.text.isEmpty) {
+                    return Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          color: theme.colorScheme.onPrimary,
+                          onPressed: () => {
+                            appState.removePlayer(player),
+                            setState(() => isEditable = false)
+                          },
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            controller: textEditingController,
+                            cursorColor: Colors.greenAccent,
+                            style: scoreStyle,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.check),
+                          color: theme.colorScheme.onPrimary,
+                          onPressed: () => {
+                            appState.updatePlayerName(player, textEditingController.text),
+                            setState(() => isEditable = false)
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.cancel),
+                          color: theme.colorScheme.onPrimary,
+                          onPressed: () => setState(() => isEditable = false)
+                        ),
+                      ],
+                    );
+                  } else {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(player.name, style: nameStyle),
+                        Text('Score: ${player.score}', style: scoreStyle)
+                      ],
+                    );
+                  }
+                }),
+              ),
+            ),
             Row(
               children: [
                 IconButton(
-                  style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.red)),
+                  style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.redAccent)),
                   onPressed: () => {
                     appState.addScore(player)
                   },
-                  icon: const Icon(Icons.add, color: Colors.white),
+                  icon: Icon(Icons.add, color: theme.colorScheme.onPrimary),
                 ),
                 IconButton(
-                  style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.red)),
+                  style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.redAccent)),
                   onPressed: () => {
                     appState.subtractScore(player)
                   },
-                  icon: const Icon(Icons.remove, color: Colors.white),
+                  icon: Icon(Icons.remove, color: theme.colorScheme.onPrimary),
                 ),
               ],
             )
