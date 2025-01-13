@@ -1,8 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'player.dart';
+import 'ads/loadBannerAd.dart' as banner_ad_loader;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  unawaited(MobileAds.instance.initialize());
+
   runApp(const MyApp());
 }
 
@@ -103,12 +110,13 @@ class MyHomePage extends StatelessWidget {
     var players = appState.players;
 
     return Scaffold(
+      bottomNavigationBar: banner_ad_loader.MyBannerAdWidget(adSize: AdSize.banner),
       body: ListView(
         children: [
           for (var player in players)
             PlayerCard (
               player: player,
-            )
+            ),
         ],
       ),
     );
