@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyAppState extends ChangeNotifier {
-  var players = [Player(name: "Ben"), Player(name: "Gijs"), Player(name: "Rowan"), Player(name: "Stef"), Player(name: "Stijn")];
+  List<Player> players = [];
 
   void addPlayer(name) {
     players.add(Player(name: name));
@@ -49,7 +49,6 @@ class MyAppState extends ChangeNotifier {
   void addScore(player) {
     if (players.contains(player)) {
       player.addScore();
-      sortPlayers();
       notifyListeners();
     }
   }
@@ -57,24 +56,18 @@ class MyAppState extends ChangeNotifier {
   void subtractScore(player) {
     if (players.contains(player)) {
       player.subtractScore();
-      sortPlayers();
       notifyListeners();
     }
   }
 
-  void sortPlayers() {
-    players.sort((a, b) {
-      if (b.isDead() != a.isDead()) {
-        return b.isDead() ? -1 : 1;
-      } else {
-        return a.name.compareTo(b.name);
-      }
-    });
-  }
-
   void updatePlayerName(player, name) {
     player.name = name;
+    sortPlayers();
     notifyListeners();
+  }
+
+  void sortPlayers() {
+    players.sort((a, b) => a.name.compareTo(b.name));
   }
 }
 
@@ -92,7 +85,10 @@ class TopBar extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.person_add_alt_1),
             tooltip: 'Add player',
-            onPressed: () => appState.addPlayer(""),
+            onPressed: () => {
+              appState.addPlayer(""),
+              appState.sortPlayers()
+            },
           ),
         ],
       ),
@@ -137,7 +133,7 @@ class PlayerCard extends StatefulWidget {
 
 
 class _PlayerCard extends State<PlayerCard> {
-  var isEditable = false;
+  bool isEditable = false;
 
   @override
   Widget build(BuildContext context) {
@@ -147,12 +143,11 @@ class _PlayerCard extends State<PlayerCard> {
     final theme = Theme.of(context);
     final nameStyle = theme.textTheme.displayMedium!.copyWith(
       color: player.isDead() ? Colors.red : player.hasPoverty() ? Colors.yellow : theme.colorScheme.onPrimary,
-      fontSize: 30,
-      overflow: TextOverflow.fade
+      fontSize: 20,
     );
     final scoreStyle = theme.textTheme.displayMedium!.copyWith(
       color: theme.colorScheme.onPrimary,
-      fontSize: 30,
+      fontSize: 22,
     );
 
     var appState = context.watch<MyAppState>();
@@ -165,74 +160,96 @@ class _PlayerCard extends State<PlayerCard> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: TextButton(
-                onPressed: () => {},
-                onLongPress: () => setState(() => isEditable = !isEditable),
-                autofocus: false,
-                child: Builder(builder: (context) {
-                  if (isEditable || textEditingController.text.isEmpty) {
-                    return Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          color: theme.colorScheme.onPrimary,
-                          onPressed: () => {
-                            appState.removePlayer(player),
-                            setState(() => isEditable = false)
-                          },
+              child: Builder(builder: (context) {
+                if (isEditable || textEditingController.text.isEmpty) {
+                  return Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        color: theme.colorScheme.onPrimary,
+                        onPressed: () => {
+                          appState.removePlayer(player),
+                          setState(() => isEditable = false)
+                        },
+                      ),
+                      Expanded(
+                        child: TextFormField(
+                          controller: textEditingController,
+                          cursorColor: Colors.greenAccent,
+                          style: scoreStyle,
                         ),
-                        Expanded(
-                          child: TextFormField(
-                            controller: textEditingController,
-                            cursorColor: Colors.greenAccent,
-                            style: scoreStyle,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.check),
-                          color: theme.colorScheme.onPrimary,
-                          onPressed: () => {
-                            appState.updatePlayerName(player, textEditingController.text),
-                            setState(() => isEditable = false)
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.cancel),
-                          color: theme.colorScheme.onPrimary,
-                          onPressed: () => setState(() => isEditable = false)
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Row(
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.check),
+                        color: theme.colorScheme.onPrimary,
+                        onPressed: () => {
+                          appState.updatePlayerName(player, textEditingController.text),
+                          setState(() => isEditable = false)
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.cancel),
+                        color: theme.colorScheme.onPrimary,
+                        onPressed: () => setState(() => isEditable = false)
+                      ),
+                    ],
+                  );
+                } else {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 7),
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(player.name, style: nameStyle),
-                        Text('Score: ${player.score}', style: scoreStyle)
+                        Expanded(
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                color: theme.colorScheme.onPrimary,
+                                onPressed: () => setState(() => isEditable = !isEditable),
+                              ),
+                              Expanded(
+                                child: Text(player.name, style: nameStyle, overflow: TextOverflow.ellipsis),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          width: 100,
+                          child: Text('Score: ${player.score}', style: scoreStyle),
+                        )
                       ],
-                    );
-                  }
-                }),
-              ),
+                    ),
+                  );
+                }
+              }),
             ),
-            Row(
-              children: [
-                IconButton(
-                  style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.redAccent)),
-                  onPressed: () => {
-                    appState.addScore(player)
-                  },
-                  icon: Icon(Icons.add, color: theme.colorScheme.onPrimary),
-                ),
-                IconButton(
-                  style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.redAccent)),
-                  onPressed: () => {
-                    appState.subtractScore(player)
-                  },
-                  icon: Icon(Icons.remove, color: theme.colorScheme.onPrimary),
-                ),
-              ],
-            )
+            if(!isEditable && textEditingController.text.isNotEmpty)
+              Row(
+                children: [
+                  IconButton(
+                    style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.all(
+                            Colors.redAccent)),
+                    onPressed: () =>
+                    {
+                      appState.addScore(player)
+                    },
+                    icon: Icon(Icons.add, color: theme.colorScheme.onPrimary),
+                  ),
+                  IconButton(
+                    style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.all(
+                            Colors.redAccent)),
+                    onPressed: () =>
+                    {
+                      appState.subtractScore(player)
+                    },
+                    icon: Icon(
+                        Icons.remove, color: theme.colorScheme.onPrimary),
+                  ),
+                ],
+              )
           ],
         ),
       )

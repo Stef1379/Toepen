@@ -15,7 +15,7 @@ class Player {
   }
 
   void addScore() {
-    if (score < 100) score++;
+    if (score < 99) score++;
   }
 
   void subtractScore() {
