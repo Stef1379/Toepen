@@ -1,14 +1,19 @@
+import 'package:toepen_cardgame/database/firestore.dart';
 import 'package:toepen_cardgame/model/player.dart';
-import 'package:uuid/uuid.dart';
 
 class Game {
-  String id = Uuid().v4();
+  FireStore fireStore = FireStore();
+
+  String id = "";
   List<Player>? players = [];
 
-  Game({required this.players});
+  Game({required this.players}) {
+    fireStore.addGame(this);
+  }
 
   void addPlayer(String name) {
-    players?.add(Player(name: name));
+    Player player = Player(name: name, gameId: id);
+    players?.add(player);
     sortPlayers();
   }
 
@@ -24,10 +29,16 @@ class Game {
     Player? player = getPlayer(id);
     if (player == null) return;
     player.name = name;
+    fireStore.addPlayerToGame(this.id, player);
     sortPlayers();
   }
 
   void sortPlayers() {
     players?.sort((a, b) => a.name.compareTo(b.name));
   }
+
+  Map<String, dynamic> toJson() =>
+      {
+        'players': players,
+      };
 }

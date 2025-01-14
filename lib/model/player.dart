@@ -1,13 +1,16 @@
-import 'package:uuid/uuid.dart';
+import '../database/firestore.dart';
 
 const povertyScore = 14;
 
 class Player {
-  String id = Uuid().v4();
+  FireStore fireStore = FireStore();
+
+  String id = "";
+  String gameId = "";
   String name;
   int score = 0;
 
-  Player({required this.name});
+  Player({required this.name, required this.gameId});
 
   bool hasPoverty() {
     return score == povertyScore;
@@ -18,10 +21,23 @@ class Player {
   }
 
   void addScore() {
-    if (score < 99) score++;
+    if (score < 99) {
+      bool isDead = this.isDead(); //isDead must be checked before score++, because then the score will be updated to the actual score a player is pronounced dead.
+      score++;
+      if (!isDead) fireStore.updatePlayerScore(gameId, id, score);
+    }
   }
 
   void subtractScore() {
-    if (score > 0) score--;
+    if (score > 0) {
+      score--;
+      if (!isDead()) fireStore.updatePlayerScore(gameId, id, score);
+    }
   }
+
+  Map<String, dynamic> toJson() =>
+      {
+        'name': name,
+        'score': score,
+      };
 }
