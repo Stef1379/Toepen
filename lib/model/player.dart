@@ -1,6 +1,9 @@
+import 'package:uuid/uuid.dart';
+
 const povertyScore = 14;
 
 class Player {
+  String id = Uuid().v4();
   String name;
   int score = 0;
 

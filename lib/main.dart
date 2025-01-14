@@ -9,7 +9,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'player.dart';
+import 'model/game.dart';
+import 'model/player.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_screen.dart';
 import 'ads/loadBannerAd.dart' as banner_ad_loader;
@@ -58,41 +59,39 @@ class MyApp extends StatelessWidget {
 }
 
 class MyAppState extends ChangeNotifier {
-  List<Player> players = [];
+  Game currentGame = Game(players: []);
 
-  void addPlayer(name) {
-    players.add(Player(name: name));
-    sortPlayers();
+  void addPlayer(String name) {
+    currentGame.addPlayer(name);
     notifyListeners();
   }
 
-  void removePlayer(player) {
-    players.remove(player);
+  void removePlayer(String id) {
+    currentGame.removePlayer(id);
     notifyListeners();
   }
 
-  void addScore(player) {
-    if (players.contains(player)) {
-      player.addScore();
-      notifyListeners();
+  void addScore(String id) {
+    Player? player = currentGame.getPlayer(id);
+    if (player == null) return;
+    player.addScore();
+    notifyListeners();
     }
+
+  void subtractScore(String id) {
+    Player? player = currentGame.getPlayer(id);
+    if (player == null) return;
+    player.subtractScore();
+    notifyListeners();
   }
 
-  void subtractScore(player) {
-    if (players.contains(player)) {
-      player.subtractScore();
-      notifyListeners();
-    }
-  }
-
-  void updatePlayerName(player, name) {
-    player.name = name;
-    sortPlayers();
+  void updatePlayerName(String id, String name) {
+    currentGame.updatePlayerName(id, name);
     notifyListeners();
   }
 
   void sortPlayers() {
-    players.sort((a, b) => a.name.compareTo(b.name));
+    currentGame.sortPlayers();
   }
 }
 
@@ -143,7 +142,6 @@ class TopBar extends StatelessWidget {
               if (user.displayName != null) {
                 return Text("Welcome ${user.displayName}");
               }
-              // Anders een loading indicator tonen
               return const Center(
                 child: SizedBox(
                   height: 20,
@@ -177,7 +175,7 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
-    var players = appState.players;
+    var players = appState.currentGame.players ?? [];
 
     return Scaffold(
       bottomNavigationBar: banner_ad_loader.MyBannerAdWidget(adSize: AdSize.banner),
@@ -242,7 +240,7 @@ class _PlayerCard extends State<PlayerCard> {
                         icon: const Icon(Icons.delete),
                         color: theme.colorScheme.onPrimary,
                         onPressed: () => {
-                          appState.removePlayer(player),
+                          appState.removePlayer(player.id),
                           setState(() => isEditable = false)
                         },
                       ),
@@ -257,7 +255,7 @@ class _PlayerCard extends State<PlayerCard> {
                         icon: const Icon(Icons.check),
                         color: theme.colorScheme.onPrimary,
                         onPressed: () => {
-                          appState.updatePlayerName(player, textEditingController.text),
+                          appState.updatePlayerName(player.id, textEditingController.text),
                           setState(() => isEditable = false)
                         },
                       ),
@@ -307,7 +305,7 @@ class _PlayerCard extends State<PlayerCard> {
                             Colors.redAccent)),
                     onPressed: () =>
                     {
-                      appState.addScore(player)
+                      appState.addScore(player.id)
                     },
                     icon: Icon(Icons.add, color: theme.colorScheme.onPrimary),
                   ),
@@ -317,7 +315,7 @@ class _PlayerCard extends State<PlayerCard> {
                             Colors.redAccent)),
                     onPressed: () =>
                     {
-                      appState.subtractScore(player)
+                      appState.subtractScore(player.id)
                     },
                     icon: Icon(
                         Icons.remove, color: theme.colorScheme.onPrimary),
