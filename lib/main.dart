@@ -1,14 +1,27 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'player.dart';
+import 'auth/auth_service.dart';
+import 'auth/login_screen.dart';
 import 'ads/loadBannerAd.dart' as banner_ad_loader;
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   unawaited(MobileAds.instance.initialize());
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(const MyApp());
 }
@@ -26,7 +39,19 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         ),
-        home: const TopBar(),
+        home: StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            print("Data: ${snapshot.data}");
+            if (snapshot.hasData) {
+              return const TopBar();
+            }
+            return const LoginScreen();
+          },
+        ),
       ),
     );
   }
@@ -80,6 +105,35 @@ class TopBar extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.logout),
+          tooltip: 'Sign out',
+          onPressed: () async {
+            final bool? logout = await showDialog<bool>(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Uitloggen'),
+                  content: const Text('Weet je zeker dat je wilt uitloggen?'),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('Annuleren'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('Uitloggen'),
+                    ),
+                  ],
+                );
+              },
+            );
+
+            if (logout == true) {
+              await AuthService().signOut();
+            }
+          },
+        ),
         title: const Text('Toepen'),
         actions: <Widget>[
           IconButton(
@@ -92,7 +146,7 @@ class TopBar extends StatelessWidget {
           ),
         ],
       ),
-      body: const MyHomePage()
+      body: const MyHomePage(),
     );
   }
 }
