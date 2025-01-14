@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
       child: MaterialApp(
-        title: 'Toepen',
+        title: 'Toepen1',
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
@@ -96,6 +96,7 @@ class MyAppState extends ChangeNotifier {
   }
 }
 
+//TODO: Translate to english (or make some sort of translation functionality)
 class TopBar extends StatelessWidget {
   const TopBar({super.key});
 
@@ -134,7 +135,26 @@ class TopBar extends StatelessWidget {
             }
           },
         ),
-        title: const Text('Toepen'),
+        title: StreamBuilder<User?>(
+          stream: AuthService().userChanges,
+          builder: (context, snapshot) {
+            if (snapshot.hasData && snapshot.data != null) {
+              final user = snapshot.data!;
+              if (user.displayName != null) {
+                return Text("Welcome ${user.displayName}");
+              }
+              // Anders een loading indicator tonen
+              return const Center(
+                child: SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+            return const Text('Toepen');
+          },
+        ),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.person_add_alt_1),
