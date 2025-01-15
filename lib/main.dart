@@ -11,6 +11,9 @@ import 'package:provider/provider.dart';
 
 import 'model/game.dart';
 import 'model/player.dart';
+
+import 'profile_screen.dart';
+
 import 'auth/auth_service.dart';
 import 'auth/login_screen.dart';
 import 'ads/loadBannerAd.dart' as banner_ad_loader;
@@ -105,32 +108,15 @@ class TopBar extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.logout),
-          tooltip: 'Sign out',
-          onPressed: () async {
-            final bool? logout = await showDialog<bool>(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: const Text('Uitloggen'),
-                  content: const Text('Weet je zeker dat je wilt uitloggen?'),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text('Annuleren'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text('Uitloggen'),
-                    ),
-                  ],
-                );
-              },
+          icon: const Icon(Icons.person),
+          tooltip: 'Profiel',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProfileScreen(),
+              ),
             );
-
-            if (logout == true) {
-              await AuthService().signOut();
-            }
           },
         ),
         title: StreamBuilder<User?>(
