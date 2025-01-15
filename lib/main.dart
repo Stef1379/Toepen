@@ -46,7 +46,6 @@ class MyApp extends StatelessWidget {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            print("Data: ${snapshot.data}");
             if (snapshot.hasData) {
               return const TopBar();
             }

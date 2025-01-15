@@ -14,6 +14,7 @@ class Game {
   void addPlayer(String name) {
     Player player = Player(name: name, gameId: id);
     players?.add(player);
+    fireStore.addPlayerToGame(id, player);
     sortPlayers();
   }
 
@@ -29,7 +30,7 @@ class Game {
     Player? player = getPlayer(id);
     if (player == null) return;
     player.name = name;
-    fireStore.addPlayerToGame(this.id, player);
+    fireStore.updatePlayerName(id, player);
     sortPlayers();
   }
 
