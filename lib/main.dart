@@ -108,7 +108,7 @@ class TopBar extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.person),
+          icon: const Icon(Icons.account_circle),
           tooltip: 'Profiel',
           onPressed: () {
             Navigator.push(

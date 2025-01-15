@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'auth/auth_service.dart';
 
+//TODO: Translate to english (or make some sort of translation functionality)
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
