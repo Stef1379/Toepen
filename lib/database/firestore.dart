@@ -9,12 +9,28 @@ class FireStore {
 
   Future<void> addGame(Game game) async {
     var userDoc = getUserDoc();
-    await userDoc.collection("games").add(game.toJson())
+    var gameJson = game.toJson();
+
+    await userDoc.collection("games").add(gameJson)
         .then((DocumentReference doc) => {
           game.id = doc.id,
           print('DocumentSnapshot added with ID: ${doc.id}')
         })
         .catchError((e) => {print("Error: $e")});
+  }
+
+  //TODO: Player List is empty when fetching gamehistory (probably something to do with the mapping)
+  Future<List<Game>> getGameHistory(String currentGameId) async {
+    var userDoc = getUserDoc();
+    final querySnapshot = await userDoc
+        .collection("games")
+        .orderBy("createdAt")
+        .get();
+
+    return querySnapshot.docs.map((doc) {
+      final data = doc.data();
+      return Game.fromMap(data);
+    }).toList();
   }
 
   Future<void> addPlayerToGame(String gameId, Player player) async {

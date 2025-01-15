@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'auth/auth_service.dart';
+import 'database/firestore.dart';
+import 'model/game.dart';
 
 //TODO: Translate to english (or make some sort of translation functionality)
 class ProfileScreen extends StatefulWidget {
@@ -17,6 +20,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isEditing = false;
   bool _isSaving = false;
   String? _errorMessage;
+  List<Game> _gameHistory = [];
+  bool _isLoadingHistory = true;
 
   @override
   void initState() {
@@ -24,6 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
     _usernameController = TextEditingController(text: user?.displayName ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
+    _loadGameHistory();
   }
 
   @override
@@ -31,6 +37,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _usernameController.dispose();
     _emailController.dispose();
     super.dispose();
+  }
+
+  String _formatDateTime(DateTime? dateTime, {bool includeTime = false}) {
+    if (dateTime == null) return 'Onbekend';
+
+    final DateFormat formatter = includeTime
+        ? DateFormat('dd-MM-yyyy HH:mm')
+        : DateFormat('dd-MM-yyyy');
+
+    return formatter.format(dateTime);
+  }
+
+
+  Future<void> _loadGameHistory() async {
+    if (FirebaseAuth.instance.currentUser == null) return;
+
+    setState(() {
+      _isLoadingHistory = true;
+    });
+
+    try {
+      final fireStore = FireStore();
+      final games = await fireStore.getGameHistory(FirebaseAuth.instance.currentUser?.uid ?? '');
+      print('Loaded game history: $games');
+      setState(() {
+        _gameHistory = games;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Fout bij laden spelgeschiedenis: ${e.toString()}';
+        debugPrint('Error loading game history: ${e.toString()}');
+      });
+    } finally {
+      setState(() {
+        _isLoadingHistory = false;
+      });
+    }
   }
 
   Future<void> _saveChanges() async {
@@ -192,10 +235,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             TextButton(
               onPressed: onConfirm,
-              child: const Text('Bevestigen'),
               style: TextButton.styleFrom(
                 foregroundColor: Colors.red,
               ),
+              child: const Text('Bevestigen'),
             ),
           ],
         );
@@ -254,11 +297,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildGameHistory() {
+    if (_isLoadingHistory) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_gameHistory.isEmpty) {
+      return Card(
+        child: SizedBox(
+          width: double.infinity,
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('Nog geen spellen gespeeld', textAlign: TextAlign.center),
+          ),
+        )
+      );
+    }
+
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Spelgeschiedenis',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemBuilder: (context, index) {
+              final game = _gameHistory[index];
+              return ListTile(
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: Text('Spel ${index + 1}'),
+                    ),
+
+                  ],
+                ),
+                subtitle: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Gemaakt op: ${_formatDateTime(game.createdAt, includeTime: true)}'),
+                    Text(
+                      '${game.players?.length} spelers',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  // Optioneel: navigeer naar game details
+                },
+              );
+            },
+            itemCount: _gameHistory.length,
+          ),
+
+
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
@@ -268,6 +384,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildErrorMessage(),
               const SizedBox(height: 20),
               _buildProfileForm(),
+              const SizedBox(height: 20),
+              _buildGameHistory(),
               const SizedBox(height: 20),
               _buildActionButtons(),
             ],

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:toepen_cardgame/database/firestore.dart';
 import 'package:toepen_cardgame/model/player.dart';
 
@@ -6,10 +7,9 @@ class Game {
 
   String id = "";
   List<Player>? players = [];
+  DateTime createdAt = DateTime.now();
 
-  Game({required this.players}) {
-    fireStore.addGame(this);
-  }
+  Game({required this.players});
 
   void addPlayer(String name) {
     Player player = Player(name: name, gameId: id);
@@ -41,5 +41,12 @@ class Game {
   Map<String, dynamic> toJson() =>
       {
         'players': players,
+        'createdAt': createdAt,
       };
+
+  factory Game.fromMap(Map<String, dynamic> map) {
+    Game game = Game(players: List<Player>.from(map['players'].map((x) => Player.fromMap(x))));
+    game.createdAt = (map['createdAt'] as Timestamp).toDate();
+    return game;
+  }
 }

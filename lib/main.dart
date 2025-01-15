@@ -14,6 +14,8 @@ import 'model/player.dart';
 
 import 'profile_screen.dart';
 
+import 'database/firestore.dart';
+
 import 'auth/auth_service.dart';
 import 'auth/login_screen.dart';
 import 'ads/loadBannerAd.dart' as banner_ad_loader;
@@ -38,7 +40,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
       child: MaterialApp(
-        title: 'Toepen1',
+        title: 'Toepen',
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
@@ -62,6 +64,19 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   Game currentGame = Game(players: []);
+
+  MyAppState() {
+    saveGameToDatabase(currentGame);
+  }
+
+  void saveGameToDatabase(Game game) {
+    FireStore().addGame(currentGame);
+  }
+
+  void createGame() {
+    currentGame = Game(players: []);
+    notifyListeners();
+  }
 
   void addPlayer(String name) {
     currentGame.addPlayer(name);
@@ -139,6 +154,45 @@ class TopBar extends StatelessWidget {
           },
         ),
         actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.add_box),
+            tooltip: 'Create new game',
+            onPressed: () => showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Nieuw spel starten'),
+                  content: const Text('Weet je zeker dat je een nieuw spel wilt starten?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Annuleren'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        appState.createGame();
+                        appState.saveGameToDatabase(appState.currentGame);
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Nieuw spel gestart!'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).primaryColor,
+                      ),
+                      child: const Text('Starten'),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+
+
           IconButton(
             icon: const Icon(Icons.person_add_alt_1),
             tooltip: 'Add player',
