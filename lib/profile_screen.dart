@@ -59,7 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       final fireStore = FireStore();
-      final games = await fireStore.getGameHistory(FirebaseAuth.instance.currentUser?.uid ?? '');
+      final games = await fireStore.getGameHistory();
       print('Loaded game history: $games');
       setState(() {
         _gameHistory = games;
@@ -328,43 +328,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemBuilder: (context, index) {
-              final game = _gameHistory[index];
-              return ListTile(
-                title: Row(
-                  children: [
-                    Expanded(
-                      child: Text('Spel ${index + 1}'),
+          SizedBox(
+            width: double.infinity,
+            height: 400,
+            child: ListView.builder(
+              shrinkWrap: true,
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                final game = _gameHistory[index];
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+                  child: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Spel ${index + 1}',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            Chip(
+                              label: Text('${game.players?.length} spelers'),
+                              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.calendar_today, size: 16),
+                            SizedBox(width: 8),
+                            Text(_formatDateTime(game.createdAt)),
+                          ],
+                        ),
+                        SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              game.winner != null ? Icons.emoji_events : Icons.sports_esports,
+                              size: 16,
+                              color: game.winner != null ? Colors.amber : null,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Winnaar: ${game.winner?.name ?? 'Nog geen winnaar'}',
+                              style: TextStyle(
+                                fontWeight: game.winner != null ? FontWeight.bold : FontWeight.normal,
+                                color: game.winner != null
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-
-                  ],
-                ),
-                subtitle: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Gemaakt op: ${_formatDateTime(game.createdAt, includeTime: true)}'),
-                    Text(
-                      '${game.players?.length} spelers',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                      ),
-                    ),
-                  ],
-                ),
-                onTap: () {
-                  // Optioneel: navigeer naar game details
-                },
-              );
-            },
-            itemCount: _gameHistory.length,
+                  ),
+                );
+              },
+              itemCount: _gameHistory.length,
+            ),
           ),
-
-
         ],
       ),
     );
@@ -388,6 +415,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildGameHistory(),
               const SizedBox(height: 20),
               _buildActionButtons(),
+              //TODO: Add ads
             ],
           ),
         ),

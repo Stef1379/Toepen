@@ -92,6 +92,7 @@ class MyAppState extends ChangeNotifier {
     Player? player = currentGame.getPlayer(id);
     if (player == null) return;
     player.addScore();
+    currentGame.checkWinner();
     notifyListeners();
     }
 

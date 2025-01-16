@@ -8,6 +8,8 @@ class Game {
   String id = "";
   List<Player>? players = [];
   DateTime createdAt = DateTime.now();
+  Player? winner;
+  bool isCompleted = false;
 
   Game({required this.players});
 
@@ -38,15 +40,31 @@ class Game {
     players?.sort((a, b) => a.name.compareTo(b.name));
   }
 
+  void checkWinner() {
+    final players = this.players;
+    if (players == null) return;
+
+    List<Player> deadPlayers = players.where((player) => player.isDead()).toList();
+    if (deadPlayers.length == players.length - 1) {
+      winner = players.firstWhere((player) => !player.isDead());
+      isCompleted = true;
+      if (winner != null) fireStore.updateGameWinnerAndIsCompleted(id, isCompleted, winner!.id);
+    }
+  }
+
   Map<String, dynamic> toJson() =>
       {
-        'players': players,
         'createdAt': createdAt,
+        'isCompleted': isCompleted,
+        if (winner != null) 'winner': winner?.id
       };
 
-  factory Game.fromMap(Map<String, dynamic> map) {
-    Game game = Game(players: List<Player>.from(map['players'].map((x) => Player.fromMap(x))));
+  factory Game.fromMap(Map<String, dynamic> map, String id, List<Player> players, Player? winner) {
+    Game game = Game(players: players);
+    game.id = id;
     game.createdAt = (map['createdAt'] as Timestamp).toDate();
+    game.winner = winner;
+    game.isCompleted = map['isCompleted'];
     return game;
   }
 }

@@ -19,17 +19,52 @@ class FireStore {
         .catchError((e) => {print("Error: $e")});
   }
 
-  //TODO: Player List is empty when fetching gamehistory (probably something to do with the mapping)
-  Future<List<Game>> getGameHistory(String currentGameId) async {
+  Future<List<Game>> getGameHistory() async {
     var userDoc = getUserDoc();
-    final querySnapshot = await userDoc
-        .collection("games")
+    var gamesCollection = userDoc.collection("games");
+
+    final gamesQuerySnapshot = await gamesCollection
         .orderBy("createdAt")
         .get();
 
-    return querySnapshot.docs.map((doc) {
+    List<Game> games = [];
+    for (var doc in gamesQuerySnapshot.docs) {
       final data = doc.data();
-      return Game.fromMap(data);
+
+      List<Player> players = await getPlayersFromGame(doc.id);
+      Player? winner = await tryGetPlayerFromGame(doc.id, data['winnerId']);
+      Game game = Game.fromMap(data, doc.id, players, winner);
+      games.add(game);
+    }
+
+    return games;
+  }
+
+  Future<Player?> tryGetPlayerFromGame(String gameId, String? playerId) async {
+    if (playerId == null) return null;
+
+    var userDoc = getUserDoc();
+    var gameCollection = userDoc.collection("games").doc(gameId);
+    var playerDoc = await gameCollection.collection("players").doc(playerId).get();
+
+    final data = playerDoc.data();
+
+    if (data != null) return Player.fromMap(data, playerDoc.id, gameId);
+    return null;
+  }
+
+  Future<List<Player>> getPlayersFromGame(String gameId) async {
+    var userDoc = getUserDoc();
+    var gameCollection = userDoc.collection("games").doc(gameId);
+    var playersCollection = gameCollection.collection("players");
+
+    final playersQuerySnapshot = await playersCollection
+        .orderBy("name")
+        .get();
+
+    return playersQuerySnapshot.docs.map((doc) {
+      final data = doc.data();
+      return Player.fromMap(data, doc.id, gameId);
     }).toList();
   }
 
@@ -49,8 +84,8 @@ class FireStore {
   Future<void> updatePlayerName(String playerId, Player player) async {
     var userDoc = getUserDoc();
     var gameCollection = userDoc.collection("games").doc(player.gameId);
-    var playerCollection = gameCollection.collection("players").doc(playerId);
-    await playerCollection.update({"name": player.name});
+    var playerDoc = gameCollection.collection("players").doc(playerId);
+    await playerDoc.update({"name": player.name});
   }
 
   Future<void> updatePlayerScore(String gameId, String playerId, int score) async {
@@ -58,6 +93,12 @@ class FireStore {
     var gameCollection = userDoc.collection("games").doc(gameId);
     var playerCollection = gameCollection.collection("players").doc(playerId);
     await playerCollection.update({"score": score});
+  }
+
+  Future<void> updateGameWinnerAndIsCompleted(String gameId, bool isComplete, String winnerId) async {
+    var userDoc = getUserDoc();
+    var gameCollection = userDoc.collection("games").doc(gameId);
+    await gameCollection.update({"isCompleted": isComplete, "winnerId": winnerId});
   }
 
   DocumentReference<Map<String, dynamic>> getUserDoc() {

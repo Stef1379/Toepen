@@ -41,9 +41,9 @@ class Player {
         'score': score,
       };
 
-  factory Player.fromMap(Map<String, dynamic> map) {
-    Player player = Player(name: map['name'], gameId: map['gameId']);
-    player.id = map['id'];
+  factory Player.fromMap(Map<String, dynamic> map, String id, String gameId) {
+    Player player = Player(name: map['name'], gameId: gameId);
+    player.id = id;
     player.score = map['score'];
     return player;
   }
