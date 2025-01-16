@@ -75,7 +75,6 @@ class FireStore {
     await gameCollection.collection("players").add(player.toJson())
         .then((DocumentReference doc) => {
           player.id = doc.id,
-          print("PLAYERNAME: ${player.name}"),
           print('DocumentSnapshot added with ID: ${doc.id}')
         })
         .catchError((e) => {print("Error: $e")});
