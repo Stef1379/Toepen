@@ -37,7 +37,7 @@ class Game {
   }
 
   void sortPlayers() {
-    players?.sort((a, b) => a.name.compareTo(b.name));
+    players?.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
   void checkWinner() {

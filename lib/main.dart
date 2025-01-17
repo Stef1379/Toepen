@@ -43,7 +43,23 @@ class MyApp extends StatelessWidget {
         title: 'Toepen',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF1B4D3E),
+            brightness: Brightness.light,
+          ),
+          cardTheme: CardTheme(
+            elevation: 3,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          textTheme: const TextTheme(
+            displayMedium: TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 20,
+            ),
+          ),
         ),
         home: StreamBuilder<User?>(
           stream: FirebaseAuth.instance.authStateChanges(),
@@ -251,120 +267,240 @@ class _PlayerCard extends State<PlayerCard> {
   Widget build(BuildContext context) {
     var player = widget.player;
     var textEditingController = TextEditingController(text: player.name);
-
     final theme = Theme.of(context);
+
+    Color cardColor = theme.colorScheme.primary;
+    if (player.isDead()) {
+      cardColor = theme.colorScheme.error;
+    } else if (player.hasPoverty()) {
+      cardColor = Colors.amber.shade900;
+    }
+
     final nameStyle = theme.textTheme.displayMedium!.copyWith(
-      color: player.isDead() ? Colors.red : player.hasPoverty() ? Colors.yellow : theme.colorScheme.onPrimary,
+      color: theme.colorScheme.onPrimary,
       fontSize: 20,
     );
+
     final scoreStyle = theme.textTheme.displayMedium!.copyWith(
       color: theme.colorScheme.onPrimary,
-      fontSize: 22,
+      fontSize: 28,
+      fontWeight: FontWeight.bold,
     );
 
     var appState = context.watch<MyAppState>();
 
     return Card(
-      color: theme.colorScheme.primary,
+      color: cardColor,
       child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Builder(builder: (context) {
-                if (isEditable || textEditingController.text.isEmpty) {
-                  return Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        color: theme.colorScheme.onPrimary,
-                        onPressed: () => {
-                          appState.removePlayer(player.id),
-                          setState(() => isEditable = false)
-                        },
-                      ),
-                      Expanded(
-                        child: TextFormField(
-                          controller: textEditingController,
-                          cursorColor: Colors.greenAccent,
-                          style: scoreStyle,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.check),
-                        color: theme.colorScheme.onPrimary,
-                        onPressed: () => {
-                          appState.updatePlayerName(player.id, textEditingController.text),
-                          setState(() => isEditable = false)
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.cancel),
-                        color: theme.colorScheme.onPrimary,
-                        onPressed: () => setState(() => isEditable = false)
-                      ),
-                    ],
-                  );
-                } else {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 7),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                color: theme.colorScheme.onPrimary,
-                                onPressed: () => setState(() => isEditable = !isEditable),
-                              ),
-                              Expanded(
-                                child: Text(player.name, style: nameStyle, overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                          width: 100,
-                          child: Text('Score: ${player.score}', style: scoreStyle),
-                        )
-                      ],
-                    ),
-                  );
-                }
-              }),
+            Row(
+              children: [
+                Expanded(
+                  child: isEditable || textEditingController.text.isEmpty
+                      ? _buildEditMode(context, textEditingController, theme, nameStyle, appState, player)
+                      : _buildDisplayMode(context, theme, nameStyle, player),
+                ),
+                // Status icoontjes
+                if (!isEditable && textEditingController.text.isNotEmpty)
+                  _buildStatusIcons(player, theme),
+              ],
             ),
-            if(!isEditable && textEditingController.text.isNotEmpty)
-              Row(
-                children: [
-                  IconButton(
-                    style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.all(
-                            Colors.redAccent)),
-                    onPressed: () =>
-                    {
-                      appState.addScore(player.id)
-                    },
-                    icon: Icon(Icons.add, color: theme.colorScheme.onPrimary),
-                  ),
-                  IconButton(
-                    style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.all(
-                            Colors.redAccent)),
-                    onPressed: () =>
-                    {
-                      appState.subtractScore(player.id)
-                    },
-                    icon: Icon(
-                        Icons.remove, color: theme.colorScheme.onPrimary),
-                  ),
-                ],
-              )
+
+            if (!isEditable && textEditingController.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildScoreButton(
+                      icon: Icons.remove,
+                      onPressed: () => appState.subtractScore(player.id),
+                      theme: theme,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        player.score.toString(),
+                        style: scoreStyle,
+                      ),
+                    ),
+                    _buildScoreButton(
+                      icon: Icons.add,
+                      onPressed: () => appState.addScore(player.id),
+                      theme: theme,
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
-      )
+      ),
+    );
+  }
+
+  Widget _buildStatusIcons(Player player, ThemeData theme) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (player.hasPoverty())
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Tooltip(
+              message: 'Armoede',
+              child: Icon(
+                Icons.warning_amber_rounded,
+                color: theme.colorScheme.onPrimary,
+                size: 24,
+              ),
+            ),
+          ),
+        if (player.isDead())
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Tooltip(
+              message: 'Dood',
+              child: Icon(
+                Icons.dangerous,  // Als deze niet beschikbaar is, gebruik dan Icons.dangerous
+                color: theme.colorScheme.onPrimary,
+                size: 24,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildEditMode(
+      BuildContext context,
+      TextEditingController controller,
+      ThemeData theme,
+      TextStyle textStyle,
+      MyAppState appState,
+      Player player,
+      ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.delete_outline),
+          color: theme.colorScheme.onPrimary,
+          iconSize: 24,
+          constraints: const BoxConstraints(
+            minWidth: 44,
+            minHeight: 44,
+          ),
+          onPressed: () {
+            appState.removePlayer(player.id);
+            setState(() => isEditable = false);
+          },
+        ),
+        Expanded(
+          child: TextFormField(
+            controller: controller,
+            cursorColor: theme.colorScheme.onPrimary,
+            textCapitalization: TextCapitalization.words,
+            style: textStyle,
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.onPrimary.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Cancel knop
+        IconButton(
+          icon: const Icon(Icons.close),
+          color: theme.colorScheme.onPrimary,
+          iconSize: 24,
+          constraints: const BoxConstraints(
+            minWidth: 44,
+            minHeight: 44,
+          ),
+          onPressed: () {
+            controller.text = player.name; // Reset naar originele naam
+            setState(() => isEditable = false);
+          },
+        ),
+        // Bevestig knop
+        IconButton(
+          icon: const Icon(Icons.check),
+          color: theme.colorScheme.onPrimary,
+          iconSize: 24,
+          constraints: const BoxConstraints(
+            minWidth: 44,
+            minHeight: 44,
+          ),
+          onPressed: () {
+            if (controller.text.isNotEmpty) {
+              appState.updatePlayerName(player.id, controller.text);
+              setState(() => isEditable = false);
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDisplayMode(
+      BuildContext context,
+      ThemeData theme,
+      TextStyle nameStyle,
+      Player player,
+      ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.edit_outlined),
+          color: theme.colorScheme.onPrimary,
+          iconSize: 24,
+          constraints: const BoxConstraints(
+            minWidth: 44,
+            minHeight: 44,
+          ),
+          onPressed: () => setState(() => isEditable = true),
+        ),
+        Expanded(
+          child: Text(
+            player.name,
+            style: nameStyle,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScoreButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required ThemeData theme,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.onPrimary.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: theme.colorScheme.onPrimary,
+            size: 26,
+          ),
+        ),
+      ),
     );
   }
 }
