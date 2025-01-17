@@ -136,20 +136,46 @@ class TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.account_circle),
-          tooltip: 'Profiel',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ProfileScreen(),
+        elevation: 2,
+        backgroundColor: theme.colorScheme.primary,
+        leading: Center(
+          child: Hero(
+            tag: 'profile',
+            child: Material(
+              type: MaterialType.transparency,
+              child: IconButton(
+                icon: Icon(
+                  Icons.account_circle,
+                  color: theme.colorScheme.onPrimary,
+                  size: 28,
+                ),
+                tooltip: 'Profiel',
+                style: IconButton.styleFrom(
+                  backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 40,
+                  minHeight: 40,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileScreen(),
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ),
         ),
         title: StreamBuilder<User?>(
           stream: AuthService().userChanges,
@@ -157,70 +183,207 @@ class TopBar extends StatelessWidget {
             if (snapshot.hasData && snapshot.data != null) {
               final user = snapshot.data!;
               if (user.displayName != null) {
-                return Text("Welcome ${user.displayName}");
-              }
-              return const Center(
-                child: SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(),
-                ),
-              );
-            }
-            return const Text('Toepen');
-          },
-        ),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.add_box),
-            tooltip: 'Create new game',
-            onPressed: () => showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: const Text('Nieuw spel starten'),
-                  content: const Text('Weet je zeker dat je een nieuw spel wilt starten?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Annuleren'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        appState.createGame();
-                        appState.saveGameToDatabase(appState.currentGame);
-                        Navigator.pop(context);
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Nieuw spel gestart!'),
-                            duration: Duration(seconds: 2),
+                return Row(
+                  children: [
+                    // Titel en naam sectie
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Toepen',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        );
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Theme.of(context).primaryColor,
+                          Text(
+                            user.displayName!,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
+                              fontWeight: FontWeight.normal,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      child: const Text('Starten'),
+                    ),
+                    // Speler counter
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onPrimary.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.people_outline,
+                            size: 16,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${appState.currentGame.players?.length ?? 0}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 );
-              },
-            ),
+              }
+              return const _LoadingIndicator();
+            }
+            return Text(
+              'Toepen',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                color: theme.colorScheme.onPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            );
+          },
+        ),
+        actions: [
+          // Nieuw spel knop
+          _ActionButton(
+            icon: Icons.add_box_rounded,
+            tooltip: 'Nieuw spel',
+            onPressed: () => _showNewGameDialog(context, appState),
           ),
-
-
-          IconButton(
-            icon: const Icon(Icons.person_add_alt_1),
-            tooltip: 'Add player',
-            onPressed: () => {
-              appState.addPlayer(""),
-              appState.sortPlayers()
+          // Speler toevoegen knop
+          _ActionButton(
+            icon: Icons.person_add_rounded,
+            tooltip: 'Speler toevoegen',
+            onPressed: () {
+              appState.addPlayer("");
+              appState.sortPlayers();
             },
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: const MyHomePage(),
+    );
+  }
+
+  void _showNewGameDialog(BuildContext context, MyAppState appState) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(
+                Icons.sports_esports_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 12),
+              const Text('Nieuw spel starten'),
+            ],
+          ),
+          content: const Text(
+            'Weet je zeker dat je een nieuw spel wilt starten?\n'
+                'Alle huidige scores worden gewist.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuleren'),
+            ),
+            FilledButton.icon(
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Starten'),
+              onPressed: () {
+                appState.createGame();
+                appState.saveGameToDatabase(appState.currentGame);
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 12),
+                        const Text('Nieuw spel gestart!'),
+                      ],
+                    ),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _ActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: IconButton(
+        icon: Icon(
+          icon,
+          color: theme.colorScheme.onPrimary,
+        ),
+        tooltip: tooltip,
+        style: IconButton.styleFrom(
+          backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        onPressed: onPressed,
+      ),
+    );
+  }
+}
+
+class _LoadingIndicator extends StatelessWidget {
+  const _LoadingIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: SizedBox(
+        height: 20,
+        width: 20,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        ),
+      ),
     );
   }
 }
@@ -363,7 +526,7 @@ class _PlayerCard extends State<PlayerCard> {
             child: Tooltip(
               message: 'Dood',
               child: Icon(
-                Icons.dangerous,  // Als deze niet beschikbaar is, gebruik dan Icons.dangerous
+                Icons.dangerous,
                 color: theme.colorScheme.onPrimary,
                 size: 24,
               ),
