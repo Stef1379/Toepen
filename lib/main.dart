@@ -372,7 +372,6 @@ class TopBar extends StatelessWidget {
       },
     );
   }
-
 }
 
 class _ActionButton extends StatelessWidget {

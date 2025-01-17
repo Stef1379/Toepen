@@ -6,17 +6,19 @@ import 'database/firestore.dart';
 import 'model/game.dart';
 
 //TODO: Translate to english (or make some sort of translation functionality)
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
-
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _usernameController;
   late TextEditingController _emailController;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
   bool _isEditing = false;
   bool _isSaving = false;
   String? _errorMessage;
@@ -26,6 +28,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _animationController.forward();
+
     final user = FirebaseAuth.instance.currentUser;
     _usernameController = TextEditingController(text: user?.displayName ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
@@ -34,6 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
+    _animationController.dispose();
     _usernameController.dispose();
     _emailController.dispose();
     super.dispose();
@@ -122,44 +135,101 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileForm() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextFormField(
-              controller: _usernameController,
-              decoration: const InputDecoration(
-                labelText: 'Gebruikersnaam',
-                icon: Icon(Icons.person),
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
+            child: Text(
+              'Gebruiker',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-              enabled: _isEditing,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vul een gebruikersnaam in';
-                }
-                return null;
-              },
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                icon: Icon(Icons.email),
-              ),
-              enabled: _isEditing,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vul een email adres in';
-                }
-                if (!value.contains('@')) {
-                  return 'Vul een geldig email adres in';
-                }
-                return null;
-              },
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                _buildProfileField(
+                  controller: _usernameController,
+                  label: 'Gebruikersnaam',
+                  icon: Icons.person_outline_rounded,
+                  isEditing: _isEditing,
+                ),
+                const SizedBox(height: 20),
+                _buildProfileField(
+                  controller: _emailController,
+                  label: 'Email',
+                  icon: Icons.email_outlined,
+                  isEditing: _isEditing,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+              ],
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required bool isEditing,
+    TextInputType? keyboardType,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: isEditing
+            ? Theme.of(context).colorScheme.surface
+            : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isEditing
+              ? Theme.of(context).colorScheme.primary
+              : Colors.transparent,
+          width: 2,
+        ),
+      ),
+      child: TextFormField(
+        controller: controller,
+        enabled: isEditing,
+        keyboardType: keyboardType,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
+          fontSize: 16,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(
+            color: isEditing
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          prefixIcon: Icon(
+            icon,
+            color: isEditing
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
         ),
       ),
     );
@@ -168,52 +238,115 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildActionButtons() {
     if (_isEditing) return const SizedBox.shrink();
 
-    return Column(
-      children: [
-        ElevatedButton.icon(
-          onPressed: () => _showConfirmationDialog(
-            title: 'Wachtwoord wijzigen',
-            content: 'Weet je zeker dat je je wachtwoord wilt wijzigen? Er wordt een email verzonden naar ${_emailController.text}',
-            onConfirm: () {
-              FirebaseAuth.instance.sendPasswordResetEmail(
-                email: _emailController.text,
-              );
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Email verzonden om wachtwoord te wijzigen'),
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Column(
+        children: [
+          _buildActionButton(
+            icon: Icons.lock_outline_rounded,
+            label: 'Wachtwoord Wijzigen',
+            onPressed: () => _showConfirmationDialog(
+              title: 'Wachtwoord wijzigen',
+              content: 'Weet je zeker dat je je wachtwoord wilt wijzigen? Er wordt een email verzonden naar ${_emailController.text}',
+              onConfirm: () async {
+                await FirebaseAuth.instance.sendPasswordResetEmail(
+                  email: _emailController.text,
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Email verzonden om wachtwoord te wijzigen'),
+                    ),
+                  );
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildActionButton(
+            icon: Icons.logout_rounded,
+            label: 'Uitloggen',
+            isDestructive: true,
+            onPressed: () => _showConfirmationDialog(
+              title: 'Uitloggen',
+              content: 'Weet je zeker dat je wilt uitloggen?',
+              onConfirm: () async {
+                await AuthService().signOut();
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+    bool isDestructive = false,
+  }) {
+    return Container(
+      width: double.infinity,
+      height: 54,
+      decoration: BoxDecoration(
+        gradient: isDestructive
+            ? LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.error,
+            Theme.of(context).colorScheme.error.withValues(alpha: 0.8),
+          ],
+        )
+            : LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: (isDestructive
+                ? Theme.of(context).colorScheme.error
+                : Theme.of(context).colorScheme.primary).withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: Colors.white,
                 ),
-              );
-              Navigator.of(context).pop(); // Sluit de dialog
-            },
-          ),
-          icon: const Icon(Icons.lock),
-          label: const Text('Wachtwoord Wijzigen'),
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 50),
-          ),
-        ),
-        const SizedBox(height: 12),
-        ElevatedButton.icon(
-          onPressed: () => _showConfirmationDialog(
-            title: 'Uitloggen',
-            content: 'Weet je zeker dat je wilt uitloggen?',
-            onConfirm: () async {
-              await AuthService().signOut();
-              if (context.mounted) {
-                Navigator.of(context).pop(); // Sluit de dialog
-                Navigator.of(context).pop(); // Ga terug naar vorig scherm
-              }
-            },
-          ),
-          icon: const Icon(Icons.logout),
-          label: const Text('Uitloggen'),
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 50),
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -263,35 +396,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final theme = Theme.of(context);
+
     return AppBar(
-      title: const Text('Profiel'),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: _isEditing
-            ? () {
-          setState(() {
-            _isEditing = false;
-            final user = FirebaseAuth.instance.currentUser;
-            _usernameController.text = user?.displayName ?? '';
-            _emailController.text = user?.email ?? '';
-          });
-        }
-            : () => Navigator.of(context).pop(),
+      elevation: 2,
+      backgroundColor: theme.colorScheme.primary,
+      leading: Center(
+        child: Hero(
+          tag: 'profile',
+          child: Material(
+            type: MaterialType.transparency,
+            child: IconButton(
+              icon: Icon(
+                Icons.arrow_back_rounded,
+                color: theme.colorScheme.onPrimary,
+                size: 28,
+              ),
+              tooltip: 'Terug',
+              style: IconButton.styleFrom(
+                backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: EdgeInsets.zero,
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 40,
+                maxWidth: 40,
+                maxHeight: 40,
+              ),
+              onPressed: _isEditing
+                  ? () {
+                setState(() {
+                  _isEditing = false;
+                  final user = FirebaseAuth.instance.currentUser;
+                  _usernameController.text = user?.displayName ?? '';
+                  _emailController.text = user?.email ?? '';
+                });
+              }
+                  : () => Navigator.of(context).pop(),
+            ),
+          ),
+        ),
+      ),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Profiel',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data?.displayName != null) {
+                return Text(
+                  snapshot.data!.displayName!,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.normal,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
       ),
       actions: [
-        IconButton(
-          icon: Icon(_isEditing ? Icons.save : Icons.edit),
-          onPressed: _isSaving
-              ? null
-              : () {
-            if (_isEditing) {
-              _saveChanges();
-            } else {
-              setState(() {
-                _isEditing = true;
-              });
-            }
-          },
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: IconButton(
+            icon: Icon(
+              _isEditing ? Icons.save_rounded : Icons.edit_rounded,
+              color: theme.colorScheme.onPrimary,
+              size: 28,
+            ),
+            tooltip: _isEditing ? 'Opslaan' : 'Bewerken',
+            style: IconButton.styleFrom(
+              backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: EdgeInsets.zero,
+            ),
+            constraints: const BoxConstraints(
+              minWidth: 40,
+              minHeight: 40,
+            ),
+            onPressed: _isSaving
+                ? null
+                : () {
+              if (_isEditing) {
+                _saveChanges();
+              } else {
+                setState(() {
+                  _isEditing = true;
+                });
+              }
+            },
+          ),
         ),
       ],
     );
@@ -303,18 +513,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     if (_gameHistory.isEmpty) {
-      return Card(
-        child: SizedBox(
-          width: double.infinity,
-          child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text('Nog geen spellen gespeeld', textAlign: TextAlign.center),
+      return Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
           ),
-        )
+        ),
+        width: double.infinity,
+        padding: const EdgeInsets.all(16.0),
+        child: const Text(
+          'Nog geen spellen gespeeld',
+          textAlign: TextAlign.center,
+        ),
       );
     }
 
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      width: double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -328,18 +552,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
-          SizedBox(
-            width: double.infinity,
-            height: 400,
+          Expanded(
             child: ListView.builder(
-              shrinkWrap: true,
-              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _gameHistory.length,
               itemBuilder: (context, index) {
                 final game = _gameHistory[index];
-                return Card(
-                  margin: EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -356,15 +582,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.calendar_today, size: 16),
-                            SizedBox(width: 8),
+                            const Icon(Icons.calendar_today, size: 16),
+                            const SizedBox(width: 8),
                             Text(_formatDateTime(game.createdAt)),
                           ],
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Row(
                           children: [
                             Icon(
@@ -372,14 +598,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               size: 16,
                               color: game.winner != null ? Colors.amber : null,
                             ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Winnaar: ${game.winner?.name ?? 'Nog geen winnaar'}',
-                              style: TextStyle(
-                                fontWeight: game.winner != null ? FontWeight.bold : FontWeight.normal,
-                                color: game.winner != null
-                                    ? Theme.of(context).colorScheme.primary
-                                    : null,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Winnaar: ${game.winner?.name ?? 'Nog geen winnaar'}',
+                                style: TextStyle(
+                                  fontWeight: game.winner != null ? FontWeight.bold : FontWeight.normal,
+                                  color: game.winner != null
+                                      ? Theme.of(context).colorScheme.primary
+                                      : null,
+                                ),
                               ),
                             ),
                           ],
@@ -389,7 +617,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 );
               },
-              itemCount: _gameHistory.length,
             ),
           ),
         ],
@@ -401,23 +628,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildErrorMessage(),
-              const SizedBox(height: 20),
-              _buildProfileForm(),
-              const SizedBox(height: 20),
-              _buildGameHistory(),
-              const SizedBox(height: 20),
-              _buildActionButtons(),
-              //TODO: Add ads
-            ],
-          ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildErrorMessage(),
+                              const SizedBox(height: 16),
+                              _buildProfileForm(),
+                              const SizedBox(height: 16),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildGameHistory(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildActionButtons(),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
