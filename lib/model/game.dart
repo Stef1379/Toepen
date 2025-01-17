@@ -43,7 +43,7 @@ class Game {
 
   void checkWinner() {
     final players = this.players;
-    if (players == null) return;
+    if (players == null || players.length <= 1) return;
 
     List<Player> deadPlayers = players.where((player) => player.isDead()).toList();
     if (deadPlayers.length == players.length - 1) {

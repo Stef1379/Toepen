@@ -351,6 +351,8 @@ class TopBar extends StatelessWidget {
                     ),
                     onPressed: () {
                       Provider.of<MyAppState>(context, listen: false).createGame();
+                      Game game = Provider.of<MyAppState>(context, listen: false).currentGame;
+                      Provider.of<MyAppState>(context, listen: false).saveGameToDatabase(game);
                       Navigator.of(context).pop();
                     },
                     child: Text(
