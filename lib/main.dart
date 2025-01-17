@@ -257,7 +257,7 @@ class TopBar extends StatelessWidget {
           _ActionButton(
             icon: Icons.add_box_rounded,
             tooltip: 'Nieuw spel',
-            onPressed: () => _showNewGameDialog(context, appState),
+            onPressed: () => _showNewGameDialog(context),
           ),
           // Speler toevoegen knop
           _ActionButton(
@@ -275,64 +275,102 @@ class TopBar extends StatelessWidget {
     );
   }
 
-  void _showNewGameDialog(BuildContext context, MyAppState appState) {
-    showDialog(
+  Future<void> _showNewGameDialog(BuildContext context) async {
+    final theme = Theme.of(context);
+    return showDialog<void>(
       context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Row(
+          backgroundColor: theme.colorScheme.surface,
+          surfaceTintColor: theme.colorScheme.surfaceTint,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Column(
             children: [
               Icon(
-                Icons.sports_esports_rounded,
-                color: Theme.of(context).colorScheme.primary,
+                Icons.warning_rounded,
+                size: 48,
+                color: theme.colorScheme.primary,
               ),
-              const SizedBox(width: 12),
-              const Text('Nieuw spel starten'),
+              const SizedBox(height: 16),
+              Text(
+                'Nieuw spel starten?',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
-          content: const Text(
-            'Weet je zeker dat je een nieuw spel wilt starten?\n'
-                'Alle huidige scores worden gewist.',
+          content: Text(
+            'Het huidige spel wordt definitief en kan niet meer worden bijgewerkt.',
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 16,
+            ),
+            textAlign: TextAlign.center,
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuleren'),
-            ),
-            FilledButton.icon(
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Starten'),
-              onPressed: () {
-                appState.createGame();
-                appState.saveGameToDatabase(appState.currentGame);
-                Navigator.pop(context);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        const Icon(
-                          Icons.check_circle_outline,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 12),
-                        const Text('Nieuw spel gestart!'),
-                      ],
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     ),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      'Annuleren',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    duration: const Duration(seconds: 2),
                   ),
-                );
-              },
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      Provider.of<MyAppState>(context, listen: false).createGame();
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      'Nieuw spel',
+                      style: TextStyle(
+                        color: theme.colorScheme.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         );
       },
     );
   }
+
 }
 
 class _ActionButton extends StatelessWidget {

@@ -80,6 +80,12 @@ class FireStore {
         .catchError((e) => {print("Error: $e")});
   }
 
+  Future<void> removePlayerFromGame(String gameId, String playerId) async {
+    var userDoc = getUserDoc();
+    var gameCollection = userDoc.collection("games").doc(gameId);
+    await gameCollection.collection("players").doc(playerId).delete();
+  }
+
   Future<void> updatePlayerName(String playerId, Player player) async {
     var userDoc = getUserDoc();
     var gameCollection = userDoc.collection("games").doc(player.gameId);

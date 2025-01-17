@@ -20,8 +20,9 @@ class Game {
     sortPlayers();
   }
 
-  void removePlayer(String id) {
-    players?.removeWhere((player) => player.id == id);
+  void removePlayer(String playerId) {
+    players?.removeWhere((player) => player.id == playerId);
+    fireStore.removePlayerFromGame(id, playerId);
   }
 
   Player? getPlayer(String id) {
