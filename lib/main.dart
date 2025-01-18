@@ -16,7 +16,7 @@ import 'package:toepen_cardgame/database/firestore.dart';
 import 'package:toepen_cardgame/firebase_options.dart';
 import 'package:toepen_cardgame/auth/auth_service.dart';
 import 'package:toepen_cardgame/auth/login_screen.dart';
-import 'package:toepen_cardgame/ads/loadBannerAd.dart' as banner_ad_loader;
+import 'package:toepen_cardgame/ads/load_banner_ad.dart';
 
 
 void main() async {
@@ -475,7 +475,7 @@ class MyHomePage extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      bottomNavigationBar: banner_ad_loader.MyBannerAdWidget(adSize: AdSize.banner),
+      bottomNavigationBar: MyBannerAdWidget(adSize: AdSize.banner),
       body: players.isEmpty
           ? Center(
         child: Padding(
