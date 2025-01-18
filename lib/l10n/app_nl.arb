@@ -18,6 +18,13 @@
   "register": "Registreren",
   "changePassword": "Wachtwoord Wijzigen",
   "changePasswordConfirmation": "Weet je zeker dat je je wachtwoord wilt wijzigen? Er wordt een email verzonden naar {email}",
+  "@changePasswordConfirmation": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "passwordResetEmailSent": "Email verzonden om wachtwoord te wijzigen",
   "logout": "Uitloggen",
   "logoutConfirmation": "Weet je zeker dat je wilt uitloggen?",
@@ -27,9 +34,30 @@
   "noGamesPlayed": "Nog geen spellen gespeeld",
   "game": "Spel {count}",
   "players": "{count} spelers",
+  "@players": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "winner": "Winnaar: {name}",
+  "@winner": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "noWinnerYet": "Nog geen winnaar",
   "errorLoadingHistory": "Fout bij laden spelgeschiedenis: {error}",
+  "@errorLoadingHistory": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "newGame": "Nieuw spel",
   "addPlayer": "Speler toevoegen",
   "noPlayersYet": "Nog geen spelers toegevoegd",
@@ -49,6 +77,13 @@
   "errorIncorrectCredentials": "Incorrect emailadres of wachtwoord",
   "errorUserDisabled": "Dit account is uitgeschakeld",
   "errorGeneric": "Er is een fout opgetreden: {message}",
+  "@errorGeneric": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "errorEmailInUse": "Dit emailadres is al in gebruik",
   "errorInvalidEmail": "Ongeldig emailadres",
   "errorWeakPassword": "Wachtwoord is te zwak",
@@ -56,5 +91,12 @@
   "deleteGame": "Spel verwijderen",
   "deleteGameConfirmation": "Weet je zeker dat je dit spel wilt verwijderen?",
   "gameDeleted": "Spel verwijderd",
-  "errorDeletingGame": "Fout bij verwijderen spel: {error}"
+  "errorDeletingGame": "Fout bij verwijderen spel: {error}",
+  "@errorDeletingGame": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }

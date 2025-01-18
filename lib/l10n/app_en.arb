@@ -33,6 +33,13 @@
   "gameHistory": "Game History",
   "noGamesPlayed": "No games played yet",
   "game": "Game {count}",
+  "@game": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "players": "{count} players",
   "@players": {
     "placeholders": {
