@@ -138,7 +138,7 @@ class TopBar extends StatelessWidget {
     var appState = context.watch<MyAppState>();
     final theme = Theme.of(context);
 
-    void _navigateToProfile(BuildContext context) {
+    void navigateToProfile(BuildContext context) {
       Navigator.of(context).push(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => const ProfileScreen(),
@@ -182,7 +182,7 @@ class TopBar extends StatelessWidget {
                   minHeight: 40,
                 ),
                 onPressed: () {
-                  _navigateToProfile(context);
+                  navigateToProfile(context);
                 },
               ),
             ),
