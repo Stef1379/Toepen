@@ -156,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             error = await _auth.signInWithEmailAndPassword(
                               _emailController.text,
                               _passwordController.text,
-                            ) ?? '';
+                            );
                           }
                         } catch (e) {
                           setState(() {
