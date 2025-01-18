@@ -523,7 +523,7 @@ class MyHomePage extends StatelessWidget {
                   ),
                   child: Stack(
                     children: [
-                      // Tooltip pijltje
+                      // Tooltip arrow
                       Positioned(
                         top: -10,
                         left: 24,
@@ -636,7 +636,7 @@ class _PlayerCard extends State<PlayerCard> {
                       ? _buildEditMode(context, textEditingController, theme, nameStyle, appState, player)
                       : _buildDisplayMode(context, theme, nameStyle, player),
                 ),
-                // Status icoontjes
+                // Status icons
                 if (!isEditable && textEditingController.text.isNotEmpty)
                   _buildStatusIcons(player, theme),
               ],
@@ -757,7 +757,7 @@ class _PlayerCard extends State<PlayerCard> {
             minHeight: 44,
           ),
           onPressed: () {
-            controller.text = player.name; // Reset naar originele naam
+            controller.text = player.name;
             setState(() => isEditable = false);
           },
         ),
