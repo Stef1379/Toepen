@@ -15,8 +15,9 @@ class AuthService {
         email: email,
         password: password,
       );
-      return '';
     } on FirebaseAuthException catch (e) {
+      if (!context.mounted) return '';
+
       switch (e.code) {
         case 'user-not-found':
         case 'invalid-email':
@@ -30,6 +31,7 @@ class AuthService {
           return AppLocalizations.of(context)!.errorGeneric(e.message ?? '');
       }
     }
+    return '';
   }
 
   Future<String> registerWithEmailAndPassword(String email, String password, BuildContext context) async {
@@ -40,6 +42,8 @@ class AuthService {
       );
       return '';
     } on FirebaseAuthException catch (e) {
+      if (!context.mounted) return '';
+
       switch (e.code) {
         case 'email-already-in-use':
           return AppLocalizations.of(context)!.errorEmailInUse;
