@@ -52,5 +52,10 @@
   "errorEmailInUse": "Dit emailadres is al in gebruik",
   "errorInvalidEmail": "Ongeldig emailadres",
   "errorWeakPassword": "Wachtwoord is te zwak",
-  "errorOperationNotAllowed": "Email/wachtwoord registratie is niet ingeschakeld"
+  "errorOperationNotAllowed": "Email/wachtwoord registratie is niet ingeschakeld",
+  "deleteGame": "Spel verwijderen",
+  "deleteGameConfirmation": "Weet je zeker dat je dit spel wilt verwijderen?",
+  "gameDeleted": "Spel verwijderd",
+  "undo": "Ongedaan maken",
+  "errorDeletingGame": "Fout bij verwijderen spel: {error}"
 }

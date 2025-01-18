@@ -44,6 +44,11 @@ class FireStore {
     return games;
   }
 
+  Future<void> deleteGame(String gameId) {
+    var userDoc = getUserDoc();
+    return userDoc.collection("games").doc(gameId).delete();
+  }
+
   Future<Player?> tryGetPlayerFromGame(String gameId, String? playerId) async {
     if (playerId == null) return null;
 

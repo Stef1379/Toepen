@@ -559,61 +559,79 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               itemCount: _gameHistory.length,
               itemBuilder: (context, index) {
                 final game = _gameHistory[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(12),
+                return Dismissible(
+                  key: Key(game.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.error,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 16),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      color: Theme.of(context).colorScheme.onError,
+                    ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              AppLocalizations.of(context)!.game(index + 1),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            Chip(
-                              label: Text(AppLocalizations.of(context)!.players(game.players?.length ?? 0)),
-                              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_today, size: 16),
-                            const SizedBox(width: 8),
-                            Text(_formatDateTime(game.createdAt, includeTime: true)),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              game.winner != null ? Icons.emoji_events : Icons.sports_esports,
-                              size: 16,
-                              color: game.winner != null ? Colors.amber : null,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                AppLocalizations.of(context)!.winner(game.winner?.name ?? AppLocalizations.of(context)!.noWinnerYet),
-                                style: TextStyle(
-                                  fontWeight: game.winner != null ? FontWeight.bold : FontWeight.normal,
-                                  color: game.winner != null
-                                      ? Theme.of(context).colorScheme.primary
-                                      : null,
+                  confirmDismiss: (direction) => _showDeleteConfirmation(game),
+                  onDismissed: (direction) => _deleteGame(game),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context)!.game(index + 1),
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              Chip(
+                                label: Text(AppLocalizations.of(context)!.players(game.players?.length ?? 0)),
+                                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.calendar_today, size: 16),
+                              const SizedBox(width: 8),
+                              Text(_formatDateTime(game.createdAt, includeTime: true)),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                game.winner != null ? Icons.emoji_events : Icons.sports_esports,
+                                size: 16,
+                                color: game.winner != null ? Colors.amber : null,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  AppLocalizations.of(context)!.winner(game.winner?.name ?? AppLocalizations.of(context)!.noWinnerYet),
+                                  style: TextStyle(
+                                    fontWeight: game.winner != null ? FontWeight.bold : FontWeight.normal,
+                                    color: game.winner != null
+                                        ? Theme.of(context).colorScheme.primary
+                                        : null,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -623,6 +641,56 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ],
       ),
     );
+  }
+
+  Future<bool?> _showDeleteConfirmation(Game game) {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(AppLocalizations.of(context)!.deleteGame),
+          content: Text(AppLocalizations.of(context)!.deleteGameConfirmation),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(AppLocalizations.of(context)!.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: Text(AppLocalizations.of(context)!.delete),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteGame(Game game) async {
+    try {
+      final fireStore = FireStore();
+      await fireStore.deleteGame(game.id);
+      setState(() {
+        _gameHistory.removeWhere((g) => g.id == game.id);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.gameDeleted),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.errorDeletingGame(e.toString())),
+          ),
+        );
+      }
+    }
   }
 
   @override
