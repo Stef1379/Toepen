@@ -13,29 +13,51 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _auth = AuthService();
   final _formKey = GlobalKey<FormState>();
 
-  String email = '';
-  String password = '';
-  String displayName = '';
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _displayNameController = TextEditingController();
+
   String error = '';
   bool isRegistering = false;
   bool isLoading = false;
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _displayNameController.dispose();
+    super.dispose();
+  }
+
+  void _toggleForm() {
+    setState(() {
+      isRegistering = !isRegistering;
+      error = '';
+
+      _emailController.clear();
+      _passwordController.clear();
+      _displayNameController.clear();
+
+      _formKey.currentState?.reset();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Toepen"),
+        title: const Text("Toepen"),
       ),
-      body: Center( // Wrap with Center
-        child: SingleChildScrollView( // Add ScrollView for smaller screens
+      body: Center(
+        child: SingleChildScrollView(
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 50.0),
-            constraints: const BoxConstraints(maxWidth: 400), // Add max width
+            constraints: const BoxConstraints(maxWidth: 400),
             child: Form(
               key: _formKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center, // Center column content
-                crossAxisAlignment: CrossAxisAlignment.stretch, // Stretch widgets horizontally
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.only(bottom: 24.0),
@@ -49,42 +71,64 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   if (isRegistering)
                     TextFormField(
-                      decoration: const InputDecoration(
+                      controller: _displayNameController,
+                      decoration: InputDecoration(
                         labelText: 'Naam',
-                        border: OutlineInputBorder(),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.person_outline),
                       ),
                       validator: (val) => val!.isEmpty ? 'Vul je naam in' : null,
-                      onChanged: (val) {
-                        setState(() => displayName = val);
-                      },
                     ),
                   if (isRegistering)
                     const SizedBox(height: 20.0),
 
                   TextFormField(
-                    decoration: const InputDecoration(
+                    controller: _emailController,
+                    decoration: InputDecoration(
                       labelText: 'Email',
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      errorMaxLines: 2,
                     ),
-                    validator: (val) => val!.isEmpty ? 'Vul een email in' : null,
-                    onChanged: (val) {
-                      setState(() => email = val);
+                    validator: (val) {
+                      if (val == null || val.isEmpty) {
+                        return 'Vul een emailadres in';
+                      }
+                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(val)) {
+                        return 'Vul een geldig emailadres in';
+                      }
+                      return null;
                     },
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 20.0),
 
                   TextFormField(
-                    decoration: const InputDecoration(
+                    controller: _passwordController,
+                    decoration: InputDecoration(
                       labelText: 'Wachtwoord',
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.password_outlined),
+                      errorMaxLines: 2,
                     ),
-                    obscureText: true,
-                    validator: (val) => val!.length < 6
-                        ? 'Wachtwoord moet minimaal 6 karakters zijn'
-                        : null,
-                    onChanged: (val) {
-                      setState(() => password = val);
+                    validator: (val) {
+                      if (val == null || val.isEmpty) {
+                        return 'Vul een wachtwoord in';
+                      }
+                      if (val.length < 6) {
+                        return 'Wachtwoord moet minimaal 6 karakters zijn';
+                      }
+                      return null;
                     },
+                    obscureText: true,
+                    textInputAction: TextInputAction.done,
                   ),
                   const SizedBox(height: 20.0),
 
@@ -102,23 +146,28 @@ class _LoginScreenState extends State<LoginScreen> {
                         try {
                           if (isRegistering) {
                             final userCredential = await _auth.registerWithEmailAndPassword(
-                              email,
-                              password,
+                              _emailController.text,
+                              _passwordController.text,
                             );
                             if (userCredential != null) {
-                              await _auth.updateDisplayName(displayName);
+                              await _auth.updateDisplayName(_displayNameController.text);
                             }
                           } else {
-                            await _auth.signInWithEmailAndPassword(
-                              email,
-                              password,
-                            );
+                            error = await _auth.signInWithEmailAndPassword(
+                              _emailController.text,
+                              _passwordController.text,
+                            ) ?? '';
                           }
                         } catch (e) {
                           setState(() {
                             error = e.toString();
-                            isLoading = false;
                           });
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              isLoading = false;
+                            });
+                          }
                         }
                       }
                     },
@@ -138,12 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 12.0),
 
                   TextButton(
-                    onPressed: () {
-                      setState(() {
-                        isRegistering = !isRegistering;
-                        error = '';
-                      });
-                    },
+                    onPressed: _toggleForm,
                     child: Text(
                       isRegistering
                           ? 'Al een account? Log in'
@@ -169,5 +213,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
-

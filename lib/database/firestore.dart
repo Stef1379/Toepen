@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 import '../model/game.dart';
 import '../model/player.dart';
@@ -8,15 +9,19 @@ class FireStore {
   FirebaseFirestore db = FirebaseFirestore.instance;
 
   Future<void> addGame(Game game) async {
-    var userDoc = getUserDoc();
-    var gameJson = game.toJson();
+    try {
+      var userDoc = getUserDoc();
+      var gameJson = game.toJson();
 
-    await userDoc.collection("games").add(gameJson)
-        .then((DocumentReference doc) => {
-          game.id = doc.id,
-          print('DocumentSnapshot added with ID: ${doc.id}')
-        })
-        .catchError((e) => {print("Error: $e")});
+      final docRef = await userDoc.collection("games").add(gameJson);
+      game.id = docRef.id;
+    } catch (e) {
+      debugPrint("Error adding game: $e");
+      throw FirebaseException(
+        plugin: 'firestore',
+        message: 'Kon het spel niet opslaan. Probeer het later opnieuw.',
+      );
+    }
   }
 
   Future<List<Game>> getGameHistory() async {

@@ -5,18 +5,28 @@ class AuthService {
 
   Stream<User?> get userChanges => _auth.userChanges();
 
-  Future<String?> signInWithEmailAndPassword(String email, String password) async {
+  Future<String> signInWithEmailAndPassword(String email, String password) async {
     try {
       await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      return null;
+      return '';
     } on FirebaseAuthException catch (e) {
-      return e.message;
+      switch (e.code) {
+        case 'user-not-found':
+        case 'invalid-email':
+        case 'wrong-password':
+          return 'Incorrect emailadres of wachtwoord';
+        case 'user-disabled':
+          return 'Dit account is uitgeschakeld';
+        default:
+          return 'Er is een fout opgetreden: ${e.message}';
+      }
     }
   }
 
+  //TODO: Return error messages to the user
   Future<UserCredential?> registerWithEmailAndPassword(String email, String password) async {
     try {
       return await _auth.createUserWithEmailAndPassword(

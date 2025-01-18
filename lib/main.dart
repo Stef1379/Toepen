@@ -138,6 +138,22 @@ class TopBar extends StatelessWidget {
     var appState = context.watch<MyAppState>();
     final theme = Theme.of(context);
 
+    void _navigateToProfile(BuildContext context) {
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => const ProfileScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(1.0, 0.0);
+            const end = Offset.zero;
+            const curve = Curves.easeInOut;
+            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            var offsetAnimation = animation.drive(tween);
+            return SlideTransition(position: offsetAnimation, child: child);
+          },
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         elevation: 2,
@@ -166,12 +182,7 @@ class TopBar extends StatelessWidget {
                   minHeight: 40,
                 ),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfileScreen(),
-                    ),
-                  );
+                  _navigateToProfile(context);
                 },
               ),
             ),
