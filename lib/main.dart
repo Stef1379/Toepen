@@ -438,6 +438,30 @@ class _LoadingIndicator extends StatelessWidget {
   }
 }
 
+class TooltipArrowPainter extends CustomPainter {
+  final Color color;
+
+  TooltipArrowPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint();
+    paint.color = color;
+    paint.style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(0, size.height);
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
 class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
 
@@ -445,13 +469,109 @@ class MyHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
     var players = appState.currentGame.players ?? [];
+    final theme = Theme.of(context);
 
     return Scaffold(
       bottomNavigationBar: banner_ad_loader.MyBannerAdWidget(adSize: AdSize.banner),
-      body: ListView(
+      body: players.isEmpty
+          ? Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.person_add_rounded,
+                size: 64,
+                color: theme.colorScheme.primary.withValues(alpha: 0.7),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Nog geen spelers toegevoegd',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Klik op de knop hieronder om spelers toe te voegen aan het spel',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              TextButton(
+                onPressed: () {
+                  appState.addPlayer("");
+                  appState.sortPlayers();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // Tooltip pijltje
+                      Positioned(
+                        top: -10,
+                        left: 24,
+                        child: CustomPaint(
+                          size: const Size(20, 10),
+                          painter: TooltipArrowPainter(color: theme.colorScheme.surface),
+                        ),
+                      ),
+                      // Content
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.person_add_rounded,
+                                color: theme.colorScheme.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Klik hier om spelers toe te voegen',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      )
+          : ListView(
         children: [
           for (var player in players)
-            PlayerCard (
+            PlayerCard(
               player: player,
             ),
         ],
