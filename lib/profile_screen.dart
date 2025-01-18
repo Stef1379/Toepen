@@ -1,11 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'auth/auth_service.dart';
-import 'database/firestore.dart';
-import 'model/game.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-//TODO: Translate to english (or make some sort of translation functionality)
+import 'package:intl/intl.dart';
+import 'package:flutter/material.dart';
+
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:toepen_cardgame/auth/auth_service.dart';
+import 'package:toepen_cardgame/database/firestore.dart';
+import 'package:toepen_cardgame/model/game.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -53,7 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   String _formatDateTime(DateTime? dateTime, {bool includeTime = false}) {
-    if (dateTime == null) return 'Onbekend';
+    if (dateTime == null) return AppLocalizations.of(context)!.unknown;
 
     final DateFormat formatter = includeTime
         ? DateFormat('dd-MM-yyyy HH:mm')
@@ -73,13 +75,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     try {
       final fireStore = FireStore();
       final games = await fireStore.getGameHistory();
-      print('Loaded game history: $games');
       setState(() {
         _gameHistory = games;
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Fout bij laden spelgeschiedenis: ${e.toString()}';
+        _errorMessage = AppLocalizations.of(context)!.errorLoadingHistory(e.toString());
         debugPrint('Error loading game history: ${e.toString()}');
       });
     } finally {
@@ -89,7 +90,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
   }
 
-  Future<void> _saveChanges() async {
+  void _saveChanges() {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -101,14 +102,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         if (_usernameController.text != user.displayName) {
-          await user.updateDisplayName(_usernameController.text);
+          user.updateDisplayName(_usernameController.text);
         }
 
         if (_emailController.text != user.email) {
-          await user.verifyBeforeUpdateEmail(_emailController.text);
+          user.verifyBeforeUpdateEmail(_emailController.text);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Verificatie email verzonden. Check je inbox om de email wijziging te bevestigen.'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.verificationEmailSent),
             ),
           );
         }
@@ -119,7 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profiel bijgewerkt!')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.profileUpdated)),
           );
         }
       }
@@ -147,10 +148,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
             child: Text(
-              'Gebruiker',
+              AppLocalizations.of(context)!.user,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -163,14 +164,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               children: [
                 _buildProfileField(
                   controller: _usernameController,
-                  label: 'Gebruikersnaam',
+                  label: AppLocalizations.of(context)!.username,
                   icon: Icons.person_outline_rounded,
                   isEditing: _isEditing,
                 ),
                 const SizedBox(height: 20),
                 _buildProfileField(
                   controller: _emailController,
-                  label: 'Email',
+                  label: AppLocalizations.of(context)!.email,
                   icon: Icons.email_outlined,
                   isEditing: _isEditing,
                   keyboardType: TextInputType.emailAddress,
@@ -244,18 +245,18 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         children: [
           _buildActionButton(
             icon: Icons.lock_outline_rounded,
-            label: 'Wachtwoord Wijzigen',
+            label: AppLocalizations.of(context)!.changePassword,
             onPressed: () => _showConfirmationDialog(
-              title: 'Wachtwoord wijzigen',
-              content: 'Weet je zeker dat je je wachtwoord wilt wijzigen? Er wordt een email verzonden naar ${_emailController.text}',
+              title: AppLocalizations.of(context)!.changePassword,
+              content: AppLocalizations.of(context)!.changePasswordConfirmation(_emailController.text),
               onConfirm: () async {
                 await FirebaseAuth.instance.sendPasswordResetEmail(
                   email: _emailController.text,
                 );
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Email verzonden om wachtwoord te wijzigen'),
+                    SnackBar(
+                      content: Text(AppLocalizations.of(context)!.passwordResetEmailSent),
                     ),
                   );
                   Navigator.of(context).pop();
@@ -266,11 +267,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           const SizedBox(height: 12),
           _buildActionButton(
             icon: Icons.logout_rounded,
-            label: 'Uitloggen',
+            label: AppLocalizations.of(context)!.logout,
             isDestructive: true,
             onPressed: () => _showConfirmationDialog(
-              title: 'Uitloggen',
-              content: 'Weet je zeker dat je wilt uitloggen?',
+              title: AppLocalizations.of(context)!.logout,
+              content: AppLocalizations.of(context)!.logoutConfirmation,
               onConfirm: () async {
                 await AuthService().signOut();
                 if (mounted) {
@@ -364,14 +365,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuleren'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             TextButton(
               onPressed: onConfirm,
               style: TextButton.styleFrom(
                 foregroundColor: Colors.red,
               ),
-              child: const Text('Bevestigen'),
+              child: Text(AppLocalizations.of(context)!.confirm),
             ),
           ],
         );
@@ -403,7 +404,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       backgroundColor: theme.colorScheme.primary,
       leading: Center(
         child: Hero(
-          tag: 'profile',
+          tag: AppLocalizations.of(context)!.profile,
           child: Material(
             type: MaterialType.transparency,
             child: IconButton(
@@ -412,7 +413,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 color: theme.colorScheme.onPrimary,
                 size: 28,
               ),
-              tooltip: 'Terug',
+              tooltip: AppLocalizations.of(context)!.back,
               style: IconButton.styleFrom(
                 backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(
@@ -445,7 +446,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Profiel',
+            AppLocalizations.of(context)!.profile,
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
               fontWeight: FontWeight.w500,
@@ -478,7 +479,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               color: theme.colorScheme.onPrimary,
               size: 28,
             ),
-            tooltip: _isEditing ? 'Opslaan' : 'Bewerken',
+            tooltip: _isEditing ? AppLocalizations.of(context)!.save : AppLocalizations.of(context)!.edit,
             style: IconButton.styleFrom(
               backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
               shape: RoundedRectangleBorder(
@@ -523,8 +524,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
         width: double.infinity,
         padding: const EdgeInsets.all(16.0),
-        child: const Text(
-          'Nog geen spellen gespeeld',
+        child: Text(
+          AppLocalizations.of(context)!.noGamesPlayed,
           textAlign: TextAlign.center,
         ),
       );
@@ -542,10 +543,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(16.0),
             child: Text(
-              'Spelgeschiedenis',
+              AppLocalizations.of(context)!.gameHistory,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -573,11 +574,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Spel ${index + 1}',
+                              AppLocalizations.of(context)!.game(index + 1),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             Chip(
-                              label: Text('${game.players?.length} spelers'),
+                              label: Text(AppLocalizations.of(context)!.players(game.players?.length ?? 0)),
                               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                             ),
                           ],
@@ -587,7 +588,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           children: [
                             const Icon(Icons.calendar_today, size: 16),
                             const SizedBox(width: 8),
-                            Text(_formatDateTime(game.createdAt)),
+                            Text(_formatDateTime(game.createdAt, includeTime: true)),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -601,7 +602,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Winnaar: ${game.winner?.name ?? 'Nog geen winnaar'}',
+                                AppLocalizations.of(context)!.winner(game.winner?.name ?? AppLocalizations.of(context)!.noWinnerYet),
                                 style: TextStyle(
                                   fontWeight: game.winner != null ? FontWeight.bold : FontWeight.normal,
                                   color: game.winner != null

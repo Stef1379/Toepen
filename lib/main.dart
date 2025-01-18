@@ -1,24 +1,22 @@
-import 'dart:async';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'model/game.dart';
-import 'model/player.dart';
-
-import 'profile_screen.dart';
-
-import 'database/firestore.dart';
-
-import 'auth/auth_service.dart';
-import 'auth/login_screen.dart';
-import 'ads/loadBannerAd.dart' as banner_ad_loader;
+import 'package:toepen_cardgame/model/game.dart';
+import 'package:toepen_cardgame/model/player.dart';
+import 'package:toepen_cardgame/profile_screen.dart';
+import 'package:toepen_cardgame/database/firestore.dart';
+import 'package:toepen_cardgame/firebase_options.dart';
+import 'package:toepen_cardgame/auth/auth_service.dart';
+import 'package:toepen_cardgame/auth/login_screen.dart';
+import 'package:toepen_cardgame/ads/loadBannerAd.dart' as banner_ad_loader;
 
 
 void main() async {
@@ -41,6 +39,16 @@ class MyApp extends StatelessWidget {
       create: (context) => MyAppState(),
       child: MaterialApp(
         title: 'Toepen',
+        localizationsDelegates: [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: [
+          Locale('en'),
+          Locale('nl'),
+        ],
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
@@ -129,7 +137,6 @@ class MyAppState extends ChangeNotifier {
   }
 }
 
-//TODO: Translate to english (or make some sort of translation functionality)
 class TopBar extends StatelessWidget {
   const TopBar({super.key});
 
@@ -160,7 +167,7 @@ class TopBar extends StatelessWidget {
         backgroundColor: theme.colorScheme.primary,
         leading: Center(
           child: Hero(
-            tag: 'profile',
+            tag: AppLocalizations.of(context)!.profile,
             child: Material(
               type: MaterialType.transparency,
               child: IconButton(
@@ -169,7 +176,7 @@ class TopBar extends StatelessWidget {
                   color: theme.colorScheme.onPrimary,
                   size: 28,
                 ),
-                tooltip: 'Profiel',
+                tooltip: AppLocalizations.of(context)!.profile,
                 style: IconButton.styleFrom(
                   backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
                   shape: RoundedRectangleBorder(
@@ -196,14 +203,13 @@ class TopBar extends StatelessWidget {
               if (user.displayName != null) {
                 return Row(
                   children: [
-                    // Titel en naam sectie
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Toepen',
+                            AppLocalizations.of(context)!.appTitle,
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
                               fontWeight: FontWeight.w500,
@@ -220,7 +226,6 @@ class TopBar extends StatelessWidget {
                         ],
                       ),
                     ),
-                    // Speler counter
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -255,7 +260,7 @@ class TopBar extends StatelessWidget {
               return const _LoadingIndicator();
             }
             return Text(
-              'Toepen',
+              AppLocalizations.of(context)!.appTitle,
               style: theme.textTheme.headlineMedium?.copyWith(
                 color: theme.colorScheme.onPrimary,
                 fontWeight: FontWeight.bold,
@@ -264,16 +269,14 @@ class TopBar extends StatelessWidget {
           },
         ),
         actions: [
-          // Nieuw spel knop
           _ActionButton(
             icon: Icons.add_box_rounded,
-            tooltip: 'Nieuw spel',
+            tooltip: AppLocalizations.of(context)!.newGame,
             onPressed: () => _showNewGameDialog(context),
           ),
-          // Speler toevoegen knop
           _ActionButton(
             icon: Icons.person_add_rounded,
-            tooltip: 'Speler toevoegen',
+            tooltip: AppLocalizations.of(context)!.addPlayer,
             onPressed: () {
               appState.addPlayer("");
               appState.sortPlayers();
@@ -308,7 +311,7 @@ class TopBar extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Nieuw spel starten?',
+                AppLocalizations.of(context)!.startNewGame,
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
@@ -318,7 +321,7 @@ class TopBar extends StatelessWidget {
             ],
           ),
           content: Text(
-            'Het huidige spel wordt definitief en kan niet meer worden bijgewerkt.',
+            AppLocalizations.of(context)!.newGameWarning,
             style: TextStyle(
               color: theme.colorScheme.onSurfaceVariant,
               fontSize: 16,
@@ -341,7 +344,7 @@ class TopBar extends StatelessWidget {
                       Navigator.of(context).pop();
                     },
                     child: Text(
-                      'Annuleren',
+                      AppLocalizations.of(context)!.cancel,
                       style: TextStyle(
                         color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
@@ -367,7 +370,7 @@ class TopBar extends StatelessWidget {
                       Navigator.of(context).pop();
                     },
                     child: Text(
-                      'Nieuw spel',
+                      AppLocalizations.of(context)!.newGame,
                       style: TextStyle(
                         color: theme.colorScheme.error,
                         fontWeight: FontWeight.w600,
@@ -487,7 +490,7 @@ class MyHomePage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                'Nog geen spelers toegevoegd',
+                AppLocalizations.of(context)!.noPlayersYet,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
@@ -496,7 +499,7 @@ class MyHomePage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Klik op de knop hieronder om spelers toe te voegen aan het spel',
+                AppLocalizations.of(context)!.clickToAddPlayers,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
@@ -552,7 +555,7 @@ class MyHomePage extends StatelessWidget {
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              'Klik hier om spelers toe te voegen',
+                              AppLocalizations.of(context)!.clickHereToAddPlayers,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w500,
                               ),
@@ -682,7 +685,7 @@ class _PlayerCard extends State<PlayerCard> {
           Padding(
             padding: const EdgeInsets.only(left: 8),
             child: Tooltip(
-              message: 'Armoede',
+              message: AppLocalizations.of(context)!.poverty,
               child: Icon(
                 Icons.warning_amber_rounded,
                 color: theme.colorScheme.onPrimary,
@@ -694,7 +697,7 @@ class _PlayerCard extends State<PlayerCard> {
           Padding(
             padding: const EdgeInsets.only(left: 8),
             child: Tooltip(
-              message: 'Dood',
+              message: AppLocalizations.of(context)!.dead,
               child: Icon(
                 Icons.dangerous,
                 color: theme.colorScheme.onPrimary,
@@ -719,6 +722,7 @@ class _PlayerCard extends State<PlayerCard> {
       children: [
         IconButton(
           icon: const Icon(Icons.delete_outline),
+          tooltip: AppLocalizations.of(context)!.delete,
           color: theme.colorScheme.onPrimary,
           iconSize: 24,
           constraints: const BoxConstraints(
@@ -747,9 +751,9 @@ class _PlayerCard extends State<PlayerCard> {
             ),
           ),
         ),
-        // Cancel knop
         IconButton(
           icon: const Icon(Icons.close),
+          tooltip: AppLocalizations.of(context)!.cancel,
           color: theme.colorScheme.onPrimary,
           iconSize: 24,
           constraints: const BoxConstraints(
@@ -761,9 +765,9 @@ class _PlayerCard extends State<PlayerCard> {
             setState(() => isEditable = false);
           },
         ),
-        // Bevestig knop
         IconButton(
           icon: const Icon(Icons.check),
+          tooltip: AppLocalizations.of(context)!.confirm,
           color: theme.colorScheme.onPrimary,
           iconSize: 24,
           constraints: const BoxConstraints(
@@ -792,6 +796,7 @@ class _PlayerCard extends State<PlayerCard> {
       children: [
         IconButton(
           icon: const Icon(Icons.edit_outlined),
+          tooltip: AppLocalizations.of(context)!.edit,
           color: theme.colorScheme.onPrimary,
           iconSize: 24,
           constraints: const BoxConstraints(

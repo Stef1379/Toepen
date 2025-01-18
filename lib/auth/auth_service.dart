@@ -1,3 +1,7 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import 'package:flutter/cupertino.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
@@ -5,7 +9,7 @@ class AuthService {
 
   Stream<User?> get userChanges => _auth.userChanges();
 
-  Future<String> signInWithEmailAndPassword(String email, String password) async {
+  Future<String> signInWithEmailAndPassword(String email, String password, BuildContext context) async {
     try {
       await _auth.signInWithEmailAndPassword(
         email: email,
@@ -17,25 +21,38 @@ class AuthService {
         case 'user-not-found':
         case 'invalid-email':
         case 'wrong-password':
-          return 'Incorrect emailadres of wachtwoord';
+        case 'invalid-credential':
+          return AppLocalizations.of(context)!.errorIncorrectCredentials;
         case 'user-disabled':
-          return 'Dit account is uitgeschakeld';
+          return AppLocalizations.of(context)!.errorUserDisabled;
         default:
-          return 'Er is een fout opgetreden: ${e.message}';
+          debugPrint(AppLocalizations.of(context)!.errorGeneric(e.message ?? ''));
+          return AppLocalizations.of(context)!.errorGeneric(e.message ?? '');
       }
     }
   }
 
-  //TODO: Return error messages to the user
-  Future<UserCredential?> registerWithEmailAndPassword(String email, String password) async {
+  Future<String> registerWithEmailAndPassword(String email, String password, BuildContext context) async {
     try {
-      return await _auth.createUserWithEmailAndPassword(
+      await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+      return '';
     } on FirebaseAuthException catch (e) {
-      print('Error during registration: ${e.message}');
-      return null;
+      switch (e.code) {
+        case 'email-already-in-use':
+          return AppLocalizations.of(context)!.errorEmailInUse;
+        case 'invalid-email':
+          return AppLocalizations.of(context)!.errorInvalidEmail;
+        case 'weak-password':
+          return AppLocalizations.of(context)!.errorWeakPassword;
+        case 'operation-not-allowed':
+          return AppLocalizations.of(context)!.errorOperationNotAllowed;
+        default:
+          debugPrint(AppLocalizations.of(context)!.errorGeneric(e.message ?? ''));
+          return AppLocalizations.of(context)!.errorGeneric(e.message ?? '');
+      }
     }
   }
 
@@ -50,7 +67,7 @@ class AuthService {
       await Future.delayed(const Duration(milliseconds: 500));
       await reloadUser();
     } catch (e) {
-      print('Error updating display name: $e');
+      debugPrint('Error updating display name: $e');
       rethrow;
     }
   }
@@ -59,7 +76,7 @@ class AuthService {
     try {
       await _auth.currentUser?.reload();
     } catch (e) {
-      print('Error reloading user: $e');
+      debugPrint('Error reloading user: $e');
     }
   }
 }

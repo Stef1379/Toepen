@@ -1,0 +1,91 @@
+{
+  "@@locale": "en",
+  "appTitle": "Toepen",
+  "profile": "Profile",
+  "user": "User",
+  "username": "Username",
+  "email": "Email",
+  "password": "Password",
+  "name": "Name",
+  "back": "Back",
+  "edit": "Edit",
+  "save": "Save",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "delete": "Delete",
+  "unknown": "Unknown",
+  "login": "Login",
+  "register": "Register",
+  "changePassword": "Change Password",
+  "changePasswordConfirmation": "Are you sure you want to change your password? An email will be sent to {email}",
+  "@changePasswordConfirmation": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordResetEmailSent": "Email sent to change password",
+  "logout": "Logout",
+  "logoutConfirmation": "Are you sure you want to logout?",
+  "profileUpdated": "Profile updated!",
+  "verificationEmailSent": "Verification email sent. Check your inbox to confirm the email change.",
+  "gameHistory": "Game History",
+  "noGamesPlayed": "No games played yet",
+  "game": "Game {count}",
+  "players": "{count} players",
+  "@players": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "winner": "Winner: {name}",
+  "@winner": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noWinnerYet": "No winner yet",
+  "errorLoadingHistory": "Error loading game history: {error}",
+  "@errorLoadingHistory": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "newGame": "New Game",
+  "addPlayer": "Add Player",
+  "noPlayersYet": "No players added yet",
+  "clickToAddPlayers": "Click the button below to add players to the game",
+  "clickHereToAddPlayers": "Click here to add players",
+  "startNewGame": "Start new game?",
+  "newGameWarning": "The current game will be finalized and can no longer be updated.",
+  "poverty": "Poverty",
+  "dead": "Dead",
+  "alreadyHaveAccount": "Already have an account? Login",
+  "noAccount": "No account yet? Register here",
+  "enterName": "Enter your name",
+  "enterEmail": "Enter an email address",
+  "enterValidEmail": "Enter a valid email address",
+  "enterPassword": "Enter a password",
+  "passwordMinLength": "Password must be at least 6 characters",
+  "errorIncorrectCredentials": "Incorrect email or password",
+  "errorUserDisabled": "This account has been disabled",
+  "errorGeneric": "An error occurred: {message}",
+  "@errorGeneric": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "errorEmailInUse": "This email is already in use",
+  "errorInvalidEmail": "Invalid email address",
+  "errorWeakPassword": "Password is too weak",
+  "errorOperationNotAllowed": "Email/password registration is not enabled"
+}

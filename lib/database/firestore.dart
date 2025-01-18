@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
 
-import '../model/game.dart';
-import '../model/player.dart';
+import 'package:toepen_cardgame/auth/auth_service.dart';
+import 'package:toepen_cardgame/model/game.dart';
+import 'package:toepen_cardgame/model/player.dart';
 
 class FireStore {
   FirebaseFirestore db = FirebaseFirestore.instance;
@@ -17,10 +19,7 @@ class FireStore {
       game.id = docRef.id;
     } catch (e) {
       debugPrint("Error adding game: $e");
-      throw FirebaseException(
-        plugin: 'firestore',
-        message: 'Kon het spel niet opslaan. Probeer het later opnieuw.',
-      );
+      await AuthService().signOut();
     }
   }
 
@@ -80,9 +79,9 @@ class FireStore {
     await gameCollection.collection("players").add(player.toJson())
         .then((DocumentReference doc) => {
           player.id = doc.id,
-          print('DocumentSnapshot added with ID: ${doc.id}')
+          debugPrint('DocumentSnapshot added with ID: ${doc.id}')
         })
-        .catchError((e) => {print("Error: $e")});
+        .catchError((e) => {debugPrint("Error: $e")});
   }
 
   Future<void> removePlayerFromGame(String gameId, String playerId) async {

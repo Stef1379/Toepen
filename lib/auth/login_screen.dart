@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
-import 'auth_service.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-//TODO: Translate to english (or make some sort of translation functionality)
+import 'package:flutter/material.dart';
+import 'package:toepen_cardgame/auth/auth_service.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -46,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Toepen"),
+        title: Text(AppLocalizations.of(context)!.appTitle),
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -64,22 +65,31 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Title(
                       color: Colors.black,
                       child: Text(
-                        isRegistering ? "Registreren" : "Inloggen",
+                        isRegistering ? AppLocalizations.of(context)!.register : AppLocalizations.of(context)!.login,
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                     ),
                   ),
+                  if (error.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Text(
+                        error,
+                        style: const TextStyle(color: Colors.red, fontSize: 14.0),
+                        textAlign: TextAlign.start,
+                      ),
+                    ),
                   if (isRegistering)
                     TextFormField(
                       controller: _displayNameController,
                       decoration: InputDecoration(
-                        labelText: 'Naam',
+                        labelText: AppLocalizations.of(context)!.name,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         prefixIcon: const Icon(Icons.person_outline),
                       ),
-                      validator: (val) => val!.isEmpty ? 'Vul je naam in' : null,
+                      validator: (val) => val!.isEmpty ? AppLocalizations.of(context)!.enterName : null,
                     ),
                   if (isRegistering)
                     const SizedBox(height: 20.0),
@@ -87,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _emailController,
                     decoration: InputDecoration(
-                      labelText: 'Email',
+                      labelText: AppLocalizations.of(context)!.email,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -96,10 +106,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     validator: (val) {
                       if (val == null || val.isEmpty) {
-                        return 'Vul een emailadres in';
+                        return AppLocalizations.of(context)!.enterEmail;
                       }
                       if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(val)) {
-                        return 'Vul een geldig emailadres in';
+                        return AppLocalizations.of(context)!.enterValidEmail;
                       }
                       return null;
                     },
@@ -111,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _passwordController,
                     decoration: InputDecoration(
-                      labelText: 'Wachtwoord',
+                      labelText: AppLocalizations.of(context)!.password,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -120,10 +130,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     validator: (val) {
                       if (val == null || val.isEmpty) {
-                        return 'Vul een wachtwoord in';
+                        return AppLocalizations.of(context)!.enterPassword;
                       }
                       if (val.length < 6) {
-                        return 'Wachtwoord moet minimaal 6 karakters zijn';
+                        return AppLocalizations.of(context)!.passwordMinLength;
                       }
                       return null;
                     },
@@ -145,17 +155,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         try {
                           if (isRegistering) {
-                            final userCredential = await _auth.registerWithEmailAndPassword(
+                            error = await _auth.registerWithEmailAndPassword(
                               _emailController.text,
                               _passwordController.text,
+                              context
                             );
-                            if (userCredential != null) {
+                            if (error.isEmpty) {
                               await _auth.updateDisplayName(_displayNameController.text);
                             }
                           } else {
                             error = await _auth.signInWithEmailAndPassword(
                               _emailController.text,
                               _passwordController.text,
+                              context
                             );
                           }
                         } catch (e) {
@@ -180,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     )
                         : Text(
-                      isRegistering ? 'Registreren' : 'Inloggen',
+                      isRegistering ? AppLocalizations.of(context)!.register : AppLocalizations.of(context)!.login,
                       style: const TextStyle(fontSize: 16),
                     ),
                   ),
@@ -190,20 +202,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: _toggleForm,
                     child: Text(
                       isRegistering
-                          ? 'Al een account? Log in'
-                          : 'Nog geen account? Registreer hier',
+                          ? AppLocalizations.of(context)!.alreadyHaveAccount
+                          : AppLocalizations.of(context)!.noAccount,
                     ),
                   ),
-
-                  if (error.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12.0),
-                      child: Text(
-                        error,
-                        style: const TextStyle(color: Colors.red, fontSize: 14.0),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
                 ],
               ),
             ),

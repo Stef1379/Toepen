@@ -1,4 +1,4 @@
-import '../database/firestore.dart';
+import 'package:toepen_cardgame/database/firestore.dart';
 
 const povertyScore = 14;
 
