@@ -63,6 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '465308182974',
     projectId: 'toepen-d7a02',
     storageBucket: 'toepen-d7a02.firebasestorage.app',
-    iosBundleId: 'com.example.toepenCardgame',
+    iosBundleId: 'nosefreecreations.toepen.toepen_cardgame',
   );
 }
