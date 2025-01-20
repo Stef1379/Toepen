@@ -116,28 +116,11 @@ class FireStore {
   }
 
   Future<void> deleteUserData(String userId) async {
-    // Verwijder alle gebruikersdata
-    final userDoc = getUserDoc();
-
-    // Verwijder eerst alle subcollecties
-    final batch = db.batch();
-
-    // Games subcollectie verwijderen
-    final gamesSnapshot = await userDoc.collection('games').get();
-    for (var doc in gamesSnapshot.docs) {
-      // Verwijder eerst players subcollectie
-      final playersSnapshot = await doc.reference.collection('players').get();
-      for (var playerDoc in playersSnapshot.docs) {
-        batch.delete(playerDoc.reference);
-      }
-      batch.delete(doc.reference);
-    }
-
-    // Hoofddocument verwijderen
-    batch.delete(userDoc);
-
-    // Batch uitvoeren
-    await batch.commit();
+    /*
+    * Only delete the user document, because if all user data has to be deleted it will cost a lot of money.
+    * Also, if a user wants their data removed completely they can request a data removal using the website (See Google Play Console).
+    */
+    await getUserDoc().delete();
   }
 
 
