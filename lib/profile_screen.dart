@@ -4,10 +4,12 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 
 import 'package:toepen_cardgame/auth/auth_service.dart';
 import 'package:toepen_cardgame/database/firestore.dart';
 import 'package:toepen_cardgame/model/game.dart';
+import 'package:toepen_cardgame/app_state.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -713,7 +715,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       setState(() {
         _gameHistory.removeWhere((g) => g.id == game.id);
       });
+
       if (mounted) {
+        final appState = Provider.of<MyAppState>(context, listen: false);
+        if (game.id == appState.currentGame.id) {
+          appState.createGame();
+          appState.saveGameToDatabase(appState.currentGame);
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.gameDeleted),

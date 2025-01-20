@@ -12,11 +12,11 @@ import 'package:provider/provider.dart';
 import 'package:toepen_cardgame/model/game.dart';
 import 'package:toepen_cardgame/model/player.dart';
 import 'package:toepen_cardgame/profile_screen.dart';
-import 'package:toepen_cardgame/database/firestore.dart';
 import 'package:toepen_cardgame/firebase_options.dart';
 import 'package:toepen_cardgame/auth/auth_service.dart';
 import 'package:toepen_cardgame/auth/login_screen.dart';
 import 'package:toepen_cardgame/ads/load_banner_ad.dart';
+import 'package:toepen_cardgame/app_state.dart';
 
 
 void main() async {
@@ -83,57 +83,6 @@ class MyApp extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class MyAppState extends ChangeNotifier {
-  Game currentGame = Game(players: []);
-
-  MyAppState() {
-    saveGameToDatabase(currentGame);
-  }
-
-  void saveGameToDatabase(Game game) {
-    FireStore().addGame(currentGame);
-  }
-
-  void createGame() {
-    currentGame = Game(players: []);
-    notifyListeners();
-  }
-
-  void addPlayer(String name) {
-    currentGame.addPlayer(name);
-    notifyListeners();
-  }
-
-  void removePlayer(String id) {
-    currentGame.removePlayer(id);
-    notifyListeners();
-  }
-
-  void addScore(String id) {
-    Player? player = currentGame.getPlayer(id);
-    if (player == null) return;
-    player.addScore();
-    currentGame.checkWinner();
-    notifyListeners();
-    }
-
-  void subtractScore(String id) {
-    Player? player = currentGame.getPlayer(id);
-    if (player == null) return;
-    player.subtractScore();
-    notifyListeners();
-  }
-
-  void updatePlayerName(String id, String name) {
-    currentGame.updatePlayerName(id, name);
-    notifyListeners();
-  }
-
-  void sortPlayers() {
-    currentGame.sortPlayers();
   }
 }
 
