@@ -83,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextFormField(
                       controller: _displayNameController,
                       decoration: InputDecoration(
-                        labelText: AppLocalizations.of(context)!.name,
+                        labelText: AppLocalizations.of(context)!.username,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

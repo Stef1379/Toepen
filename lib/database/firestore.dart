@@ -38,6 +38,7 @@ class FireStore {
       List<Player> players = await getPlayersFromGame(doc.id);
       Player? winner = await tryGetPlayerFromGame(doc.id, data['winnerId']);
       Game game = Game.fromMap(data, doc.id, players, winner);
+      print("GAME: ${game.id}");
       games.add(game);
     }
 
@@ -114,6 +115,32 @@ class FireStore {
     var gameCollection = userDoc.collection("games").doc(gameId);
     await gameCollection.update({"isCompleted": isComplete, "winnerId": winnerId});
   }
+
+  Future<void> deleteUserData(String userId) async {
+    // Verwijder alle gebruikersdata
+    final userDoc = getUserDoc();
+
+    // Verwijder eerst alle subcollecties
+    final batch = db.batch();
+
+    // Games subcollectie verwijderen
+    final gamesSnapshot = await userDoc.collection('games').get();
+    for (var doc in gamesSnapshot.docs) {
+      // Verwijder eerst players subcollectie
+      final playersSnapshot = await doc.reference.collection('players').get();
+      for (var playerDoc in playersSnapshot.docs) {
+        batch.delete(playerDoc.reference);
+      }
+      batch.delete(doc.reference);
+    }
+
+    // Hoofddocument verwijderen
+    batch.delete(userDoc);
+
+    // Batch uitvoeren
+    await batch.commit();
+  }
+
 
   DocumentReference<Map<String, dynamic>> getUserDoc() {
     if (FirebaseAuth.instance.currentUser == null) throw FirebaseAuthException(code: 'user-not-logged-in', message: "User not logged in");

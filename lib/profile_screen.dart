@@ -150,12 +150,50 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
-            child: Text(
-              AppLocalizations.of(context)!.user,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.user,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (!_isEditing) ...[
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () => _showConfirmationDialog(
+                        title: AppLocalizations.of(context)!.deleteAccount,
+                        content: AppLocalizations.of(context)!.deleteAccountConfirmation,
+                        onConfirm: _reauthenticateUser,
+                      ),
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      label: Text(
+                        AppLocalizations.of(context)!.deleteAccount,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          side: BorderSide(
+                            color: Theme.of(context).colorScheme.error.withValues(alpha: .5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           Padding(
@@ -381,15 +419,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
 
-  Widget _buildErrorMessage() {
-    if (_errorMessage == null) return const SizedBox.shrink();
+  Widget _buildErrorMessage(String? errorMessage) {
+    if (errorMessage == null) return const SizedBox.shrink();
 
     return Card(
       color: Colors.red[100],
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Text(
-          _errorMessage!,
+          errorMessage,
           style: const TextStyle(color: Colors.red),
         ),
       ),
@@ -693,6 +731,113 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     }
   }
 
+  Future<void> _deleteAccount() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FireStore().deleteUserData(user.uid);
+        await user.delete();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context)!.accountDeleted)),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.errorDeletingAccount(e.toString())),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _reauthenticateUser() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final emailController = TextEditingController(text: user.email);
+    final passwordController = TextEditingController();
+    bool isLoading = false;
+    String? errorMessage;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(AppLocalizations.of(context)!.reauthorizeRequired),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(AppLocalizations.of(context)!.reauthorizeDescription),
+              _buildErrorMessage(errorMessage),
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.email,
+                  enabled: false,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: passwordController,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.password,
+                ),
+                obscureText: true,
+              ),
+              if (isLoading) ...[
+                const SizedBox(height: 16),
+                const CircularProgressIndicator(),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(AppLocalizations.of(context)!.cancel),
+            ),
+            FilledButton(
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                setState(() => isLoading = true);
+                try {
+                  final credential = EmailAuthProvider.credential(
+                    email: emailController.text,
+                    password: passwordController.text,
+                  );
+
+                  await user.reauthenticateWithCredential(credential);
+
+                  await _deleteAccount();
+                  if (context.mounted) {
+                    // Navigeer terug naar login/home
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  }
+                } on FirebaseAuthException catch (e) {
+                  setState(() => isLoading = false);
+                  if (context.mounted) {
+                    print("FFF: ${e.code}, ${e.message}");
+                      errorMessage = (e.code == 'wrong-password' || e.code == 'invalid-credential')
+                              ? AppLocalizations.of(context)!.wrongPassword
+                              : AppLocalizations.of(context)!.reauthorizationFailed;
+                  }
+                }
+              },
+              child: Text(AppLocalizations.of(context)!.confirm),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -713,7 +858,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _buildErrorMessage(),
+                              _buildErrorMessage(_errorMessage),
                               const SizedBox(height: 16),
                               _buildProfileForm(),
                               const SizedBox(height: 16),
