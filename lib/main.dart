@@ -92,6 +92,7 @@ class TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
+    List<Player>? players = appState.currentGame.players;
     final theme = Theme.of(context);
 
     void navigateToProfile(BuildContext context) {
@@ -221,7 +222,7 @@ class TopBar extends StatelessWidget {
           _ActionButton(
             icon: Icons.add_box_rounded,
             tooltip: AppLocalizations.of(context)!.newGame,
-            onPressed: () => _showNewGameDialog(context),
+            onPressed: () =>  players == null || players.isEmpty ? null : _showNewGameDialog(context),
           ),
           _ActionButton(
             icon: Icons.person_add_rounded,
