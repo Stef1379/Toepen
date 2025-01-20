@@ -823,7 +823,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 } on FirebaseAuthException catch (e) {
                   setState(() => isLoading = false);
                   if (context.mounted) {
-                    print("FFF: ${e.code}, ${e.message}");
                       errorMessage = (e.code == 'wrong-password' || e.code == 'invalid-credential')
                               ? AppLocalizations.of(context)!.wrongPassword
                               : AppLocalizations.of(context)!.reauthorizationFailed;

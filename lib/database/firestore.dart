@@ -38,7 +38,6 @@ class FireStore {
       List<Player> players = await getPlayersFromGame(doc.id);
       Player? winner = await tryGetPlayerFromGame(doc.id, data['winnerId']);
       Game game = Game.fromMap(data, doc.id, players, winner);
-      print("GAME: ${game.id}");
       games.add(game);
     }
 
