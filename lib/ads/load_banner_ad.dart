@@ -1,5 +1,3 @@
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
