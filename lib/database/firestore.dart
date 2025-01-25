@@ -17,6 +17,8 @@ class FireStore {
 
       final docRef = await userDoc.collection("games").add(gameJson);
       game.id = docRef.id;
+
+      if (game.players != null) addPlayersToGame(game.id, game.players);
     } catch (e) {
       debugPrint("Error adding game: $e");
       await AuthService().signOut();
@@ -87,6 +89,28 @@ class FireStore {
           debugPrint('DocumentSnapshot added with ID: ${doc.id}')
         })
         .catchError((e) => {debugPrint("Error: $e")});
+  }
+
+  Future<void> addPlayersToGame(String gameId, List<Player>? players) async {
+    if (players == null) return;
+
+    var userDoc = getUserDoc();
+    var gameCollection = userDoc.collection("games").doc(gameId);
+    var batch = db.batch();
+
+    for (var player in players) {
+      var playerDoc = gameCollection.collection("players").doc();
+      player.id = playerDoc.id;
+      batch.set(playerDoc, player.toJson());
+    }
+
+    try {
+      await batch.commit();
+      debugPrint('Successfully added ${players.length} players to the game with ID: $gameId');
+    } catch (e) {
+      debugPrint('Error adding players to game: $e');
+      rethrow;
+    }
   }
 
   Future<void> removePlayerFromGame(String gameId, String playerId) async {

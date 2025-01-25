@@ -720,7 +720,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         final appState = Provider.of<MyAppState>(context, listen: false);
         if (game.id == appState.currentGame.id) {
           appState.createGame();
-          appState.saveGameToDatabase(appState.currentGame);
         }
 
         ScaffoldMessenger.of(context).showSnackBar(

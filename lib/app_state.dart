@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:toepen_cardgame/model/game.dart';
 import 'package:toepen_cardgame/model/player.dart';
@@ -17,11 +18,17 @@ class MyAppState extends ChangeNotifier {
 
   void createGame() {
     currentGame = Game(players: []);
+    saveGameToDatabase(currentGame);
     notifyListeners();
   }
 
   void addPlayer(String name) {
     currentGame.addPlayer(name);
+    notifyListeners();
+  }
+
+  void addPlayers(List<String> names) {
+    currentGame.addPlayers(names);
     notifyListeners();
   }
 

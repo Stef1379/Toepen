@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:toepen_cardgame/database/firestore.dart';
 
 const povertyScore = 14;
 
 class Player {
+  Timer? _scoreUpdateTimer;
   FireStore fireStore = FireStore();
 
   String id = "";
@@ -12,27 +15,35 @@ class Player {
 
   Player({required this.name, required this.gameId});
 
-  bool hasPoverty() {
-    return score == povertyScore;
-  }
-
-  bool isDead() {
-    return score > povertyScore;
-  }
+  bool hasPoverty() => score == povertyScore;
+  bool isDead() => score > povertyScore;
 
   void addScore() {
     if (score < 99) {
-      bool isDead = this.isDead(); //isDead must be checked before score++, because then the score will be updated to the actual score a player is pronounced dead.
+      /* isDead must be checked before score++, because then the score will be updated to the actual score a player is pronounced dead. */
+      bool isDead = this.isDead();
       score++;
-      if (!isDead) fireStore.updatePlayerScore(gameId, id, score);
+      if (!isDead) _debouncedUpdate();
     }
   }
 
   void subtractScore() {
     if (score > 0) {
       score--;
-      if (!isDead()) fireStore.updatePlayerScore(gameId, id, score);
+      if (!isDead()) _debouncedUpdate();
     }
+  }
+
+  void _debouncedUpdate() {
+    _scoreUpdateTimer?.cancel();
+
+    _scoreUpdateTimer = Timer(Duration(milliseconds: 1000),
+            () => fireStore.updatePlayerScore(gameId, id, score));
+  }
+
+  void dispose() {
+    _scoreUpdateTimer?.cancel();
+    if (_scoreUpdateTimer != null) fireStore.updatePlayerScore(gameId, id, score);
   }
 
   Map<String, dynamic> toJson() =>

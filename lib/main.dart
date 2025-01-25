@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -9,7 +10,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:toepen_cardgame/model/game.dart';
 import 'package:toepen_cardgame/model/player.dart';
 import 'package:toepen_cardgame/profile_screen.dart';
 import 'package:toepen_cardgame/firebase_options.dart';
@@ -229,7 +229,6 @@ class TopBar extends StatelessWidget {
             tooltip: AppLocalizations.of(context)!.addPlayer,
             onPressed: () {
               appState.addPlayer("");
-              appState.sortPlayers();
             },
           ),
           const SizedBox(width: 8),
@@ -315,8 +314,6 @@ class TopBar extends StatelessWidget {
                     ),
                     onPressed: () {
                       Provider.of<MyAppState>(context, listen: false).createGame();
-                      Game game = Provider.of<MyAppState>(context, listen: false).currentGame;
-                      Provider.of<MyAppState>(context, listen: false).saveGameToDatabase(game);
                       Navigator.of(context).pop();
                     },
                     child: Text(
@@ -354,7 +351,7 @@ class _ActionButton extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       child: IconButton(
         icon: Icon(
           icon,
@@ -459,7 +456,6 @@ class MyHomePage extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   appState.addPlayer("");
-                  appState.sortPlayers();
                 },
                 child: Container(
                   padding: const EdgeInsets.all(16),

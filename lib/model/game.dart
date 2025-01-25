@@ -21,6 +21,16 @@ class Game {
     sortPlayers();
   }
 
+  void addPlayers(List<String> names) {
+    for (var name in names) {
+      Player player = Player(name: name, gameId: id);
+      players?.add(player);
+    }
+
+    fireStore.addPlayersToGame(id, players);
+    sortPlayers();
+  }
+
   void removePlayer(String playerId) {
     players?.removeWhere((player) => player.id == playerId);
     fireStore.removePlayerFromGame(id, playerId);
