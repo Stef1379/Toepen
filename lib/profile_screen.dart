@@ -22,7 +22,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   late TextEditingController _usernameController;
   late TextEditingController _emailController;
   late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
   bool _isEditing = false;
   bool _isSaving = false;
   String? _errorMessage;
@@ -35,9 +34,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
     _animationController.forward();
