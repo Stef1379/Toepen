@@ -1,6 +1,8 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import 'dart:io' show Platform;
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class MyBannerAdWidget extends StatefulWidget {
@@ -16,7 +18,7 @@ class MyBannerAdWidget extends StatefulWidget {
 
   MyBannerAdWidget({
     super.key,
-    this.adSize = AdSize.banner,
+    this.adSize = AdSize.banner
   });
 
   @override
@@ -26,6 +28,7 @@ class MyBannerAdWidget extends StatefulWidget {
 class _MyBannerAdWidgetState extends State<MyBannerAdWidget> {
   /// The banner ad to show. This is `null` until the ad is actually loaded.
   BannerAd? _bannerAd;
+  bool showAd = true;
 
   @override
   Widget build(BuildContext context) {
@@ -34,13 +37,43 @@ class _MyBannerAdWidgetState extends State<MyBannerAdWidget> {
         width: widget.adSize.width.toDouble(),
         height: widget.adSize.height.toDouble(),
         child: _bannerAd == null
-        // Nothing to render yet.
             ? const SizedBox()
-        // The actual ad.
-            : AdWidget(ad: _bannerAd!),
+            : Stack(
+          alignment: Alignment.center,
+          children: [
+            // Centered Ad
+            if (showAd)
+              Center(
+                child: AdWidget(ad: _bannerAd!),
+              ),
+            // Toggle button positioned on the right
+            Positioned(
+              right: 8,
+              child: FilledButton.tonal(
+                onPressed: () => setState(() => showAd = !showAd),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Icon(
+                  showAd ? Icons.visibility_off : Icons.visibility,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.onSecondaryContainer,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+
 
   @override
   void initState() {

@@ -113,5 +113,6 @@
   "reauthorizeRequired": "Herauthorisatie vereist",
   "reauthorizeDescription": "Voor deze actie moet je opnieuw inloggen om je identiteit te bevestigen.",
   "wrongPassword": "Onjuist wachtwoord",
-  "reauthorizationFailed": "Herauthorisatie mislukt"
+  "reauthorizationFailed": "Herauthorisatie mislukt",
+  "toggleShowAd": "Geef reclame weer"
 }

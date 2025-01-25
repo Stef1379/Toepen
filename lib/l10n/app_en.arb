@@ -120,5 +120,6 @@
   "reauthorizeRequired": "Reauthorization required",
   "reauthorizeDescription": "For this action you need to sign in again to confirm your identity.",
   "wrongPassword": "Wrong password",
-  "reauthorizationFailed": "Reauthorization failed"
+  "reauthorizationFailed": "Reauthorization failed",
+  "toggleShowAd": "Toggle Ad"
 }
