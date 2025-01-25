@@ -9,6 +9,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:toepen_cardgame/model/player.dart';
 import 'package:toepen_cardgame/profile_screen.dart';
@@ -26,6 +27,12 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    throw Exception('Error loading .env file: $e');
+  }
 
   runApp(const MyApp());
 }
@@ -219,6 +226,14 @@ class TopBar extends StatelessWidget {
           },
         ),
         actions: [
+          _ActionButton(
+            icon: Icons.group_add_rounded,
+            tooltip: 'Add default players',
+            onPressed: () {
+              final defaultPlayers = appState.currentGame.defaultPlayerNames;
+              if (defaultPlayers != null) appState.addPlayers(defaultPlayers);
+            },
+          ),
           _ActionButton(
             icon: Icons.add_box_rounded,
             tooltip: AppLocalizations.of(context)!.newGame,

@@ -1,9 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:toepen_cardgame/database/firestore.dart';
 import 'package:toepen_cardgame/model/player.dart';
 
 class Game {
+  List<String>? get defaultPlayerNames => dotenv.env["DEFAULT_PLAYER_NAMES"]?.split(',');
+
   FireStore fireStore = FireStore();
 
   String id = "";
