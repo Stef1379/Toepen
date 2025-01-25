@@ -57,7 +57,7 @@ class MyApp extends StatelessWidget {
           ),
           cardTheme: CardTheme(
             elevation: 3,
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
