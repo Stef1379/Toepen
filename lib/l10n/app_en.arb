@@ -105,5 +105,20 @@
         "type": "String"
       }
     }
-  }
+  },
+  "deleteAccount": "Delete account",
+  "deleteAccountConfirmation": "Are you sure you want to delete your account? This action cannot be undone. It is recommended to manually delete your account information within the app first.",
+  "accountDeleted": "Your account has been deleted",
+  "errorDeletingAccount": "Error deleting account: {error}",
+  "@errorDeletingAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "reauthorizeRequired": "Reauthorization required",
+  "reauthorizeDescription": "For this action you need to sign in again to confirm your identity.",
+  "wrongPassword": "Wrong password",
+  "reauthorizationFailed": "Reauthorization failed"
 }

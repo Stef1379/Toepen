@@ -17,6 +17,8 @@ class FireStore {
 
       final docRef = await userDoc.collection("games").add(gameJson);
       game.id = docRef.id;
+
+      if (game.players != null) addPlayersToGame(game.id, game.players);
     } catch (e) {
       debugPrint("Error adding game: $e");
       await AuthService().signOut();
@@ -89,6 +91,28 @@ class FireStore {
         .catchError((e) => {debugPrint("Error: $e")});
   }
 
+  Future<void> addPlayersToGame(String gameId, List<Player>? players) async {
+    if (players == null) return;
+
+    var userDoc = getUserDoc();
+    var gameCollection = userDoc.collection("games").doc(gameId);
+    var batch = db.batch();
+
+    for (var player in players) {
+      var playerDoc = gameCollection.collection("players").doc();
+      player.id = playerDoc.id;
+      batch.set(playerDoc, player.toJson());
+    }
+
+    try {
+      await batch.commit();
+      debugPrint('Successfully added ${players.length} players to the game with ID: $gameId');
+    } catch (e) {
+      debugPrint('Error adding players to game: $e');
+      rethrow;
+    }
+  }
+
   Future<void> removePlayerFromGame(String gameId, String playerId) async {
     var userDoc = getUserDoc();
     var gameCollection = userDoc.collection("games").doc(gameId);
@@ -114,6 +138,15 @@ class FireStore {
     var gameCollection = userDoc.collection("games").doc(gameId);
     await gameCollection.update({"isCompleted": isComplete, "winnerId": winnerId});
   }
+
+  Future<void> deleteUserData(String userId) async {
+    /*
+    * Only delete the user document, because if all user data has to be deleted it will cost a lot of money.
+    * Also, if a user wants their data removed completely they can request a data removal using the website (See Google Play Console).
+    */
+    await getUserDoc().delete();
+  }
+
 
   DocumentReference<Map<String, dynamic>> getUserDoc() {
     if (FirebaseAuth.instance.currentUser == null) throw FirebaseAuthException(code: 'user-not-logged-in', message: "User not logged in");

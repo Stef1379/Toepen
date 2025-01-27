@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -9,14 +10,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:toepen_cardgame/model/game.dart';
 import 'package:toepen_cardgame/model/player.dart';
 import 'package:toepen_cardgame/profile_screen.dart';
-import 'package:toepen_cardgame/database/firestore.dart';
 import 'package:toepen_cardgame/firebase_options.dart';
 import 'package:toepen_cardgame/auth/auth_service.dart';
 import 'package:toepen_cardgame/auth/login_screen.dart';
 import 'package:toepen_cardgame/ads/load_banner_ad.dart';
+import 'package:toepen_cardgame/app_state.dart';
 
 
 void main() async {
@@ -57,7 +57,7 @@ class MyApp extends StatelessWidget {
           ),
           cardTheme: CardTheme(
             elevation: 3,
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -86,63 +86,13 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyAppState extends ChangeNotifier {
-  Game currentGame = Game(players: []);
-
-  MyAppState() {
-    saveGameToDatabase(currentGame);
-  }
-
-  void saveGameToDatabase(Game game) {
-    FireStore().addGame(currentGame);
-  }
-
-  void createGame() {
-    currentGame = Game(players: []);
-    notifyListeners();
-  }
-
-  void addPlayer(String name) {
-    currentGame.addPlayer(name);
-    notifyListeners();
-  }
-
-  void removePlayer(String id) {
-    currentGame.removePlayer(id);
-    notifyListeners();
-  }
-
-  void addScore(String id) {
-    Player? player = currentGame.getPlayer(id);
-    if (player == null) return;
-    player.addScore();
-    currentGame.checkWinner();
-    notifyListeners();
-    }
-
-  void subtractScore(String id) {
-    Player? player = currentGame.getPlayer(id);
-    if (player == null) return;
-    player.subtractScore();
-    notifyListeners();
-  }
-
-  void updatePlayerName(String id, String name) {
-    currentGame.updatePlayerName(id, name);
-    notifyListeners();
-  }
-
-  void sortPlayers() {
-    currentGame.sortPlayers();
-  }
-}
-
 class TopBar extends StatelessWidget {
   const TopBar({super.key});
 
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
+    List<Player>? players = appState.currentGame.players;
     final theme = Theme.of(context);
 
     void navigateToProfile(BuildContext context) {
@@ -272,14 +222,13 @@ class TopBar extends StatelessWidget {
           _ActionButton(
             icon: Icons.add_box_rounded,
             tooltip: AppLocalizations.of(context)!.newGame,
-            onPressed: () => _showNewGameDialog(context),
+            onPressed: () =>  players == null || players.isEmpty ? null : _showNewGameDialog(context),
           ),
           _ActionButton(
             icon: Icons.person_add_rounded,
             tooltip: AppLocalizations.of(context)!.addPlayer,
             onPressed: () {
               appState.addPlayer("");
-              appState.sortPlayers();
             },
           ),
           const SizedBox(width: 8),
@@ -365,8 +314,6 @@ class TopBar extends StatelessWidget {
                     ),
                     onPressed: () {
                       Provider.of<MyAppState>(context, listen: false).createGame();
-                      Game game = Provider.of<MyAppState>(context, listen: false).currentGame;
-                      Provider.of<MyAppState>(context, listen: false).saveGameToDatabase(game);
                       Navigator.of(context).pop();
                     },
                     child: Text(
@@ -404,7 +351,7 @@ class _ActionButton extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       child: IconButton(
         icon: Icon(
           icon,
@@ -509,7 +456,6 @@ class MyHomePage extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   appState.addPlayer("");
-                  appState.sortPlayers();
                 },
                 child: Container(
                   padding: const EdgeInsets.all(16),

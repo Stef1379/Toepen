@@ -4,10 +4,12 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 
 import 'package:toepen_cardgame/auth/auth_service.dart';
 import 'package:toepen_cardgame/database/firestore.dart';
 import 'package:toepen_cardgame/model/game.dart';
+import 'package:toepen_cardgame/app_state.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -20,7 +22,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   late TextEditingController _usernameController;
   late TextEditingController _emailController;
   late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
   bool _isEditing = false;
   bool _isSaving = false;
   String? _errorMessage;
@@ -33,9 +34,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
     _animationController.forward();
@@ -150,12 +148,50 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
-            child: Text(
-              AppLocalizations.of(context)!.user,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.user,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (!_isEditing) ...[
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () => _showConfirmationDialog(
+                        title: AppLocalizations.of(context)!.deleteAccount,
+                        content: AppLocalizations.of(context)!.deleteAccountConfirmation,
+                        onConfirm: _reauthenticateUser,
+                      ),
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      label: Text(
+                        AppLocalizations.of(context)!.deleteAccount,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          side: BorderSide(
+                            color: Theme.of(context).colorScheme.error.withValues(alpha: .5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           Padding(
@@ -236,121 +272,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildActionButtons() {
-    if (_isEditing) return const SizedBox.shrink();
-
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: Column(
-        children: [
-          _buildActionButton(
-            icon: Icons.lock_outline_rounded,
-            label: AppLocalizations.of(context)!.changePassword,
-            onPressed: () => _showConfirmationDialog(
-              title: AppLocalizations.of(context)!.changePassword,
-              content: AppLocalizations.of(context)!.changePasswordConfirmation(_emailController.text),
-              onConfirm: () async {
-                await FirebaseAuth.instance.sendPasswordResetEmail(
-                  email: _emailController.text,
-                );
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(AppLocalizations.of(context)!.passwordResetEmailSent),
-                    ),
-                  );
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildActionButton(
-            icon: Icons.logout_rounded,
-            label: AppLocalizations.of(context)!.logout,
-            isDestructive: true,
-            onPressed: () => _showConfirmationDialog(
-              title: AppLocalizations.of(context)!.logout,
-              content: AppLocalizations.of(context)!.logoutConfirmation,
-              onConfirm: () async {
-                await AuthService().signOut();
-                if (mounted) {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-    bool isDestructive = false,
-  }) {
-    return Container(
-      width: double.infinity,
-      height: 54,
-      decoration: BoxDecoration(
-        gradient: isDestructive
-            ? LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.error,
-            Theme.of(context).colorScheme.error.withValues(alpha: 0.8),
-          ],
-        )
-            : LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: (isDestructive
-                ? Theme.of(context).colorScheme.error
-                : Theme.of(context).colorScheme.primary).withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _showConfirmationDialog({
     required String title,
     required String content,
@@ -381,15 +302,15 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
 
-  Widget _buildErrorMessage() {
-    if (_errorMessage == null) return const SizedBox.shrink();
+  Widget _buildErrorMessage(String? errorMessage) {
+    if (errorMessage == null) return const SizedBox.shrink();
 
     return Card(
       color: Colors.red[100],
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Text(
-          _errorMessage!,
+          errorMessage,
           style: const TextStyle(color: Colors.red),
         ),
       ),
@@ -424,8 +345,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               constraints: const BoxConstraints(
                 minWidth: 40,
                 minHeight: 40,
-                maxWidth: 40,
-                maxHeight: 40,
               ),
               onPressed: _isEditing
                   ? () {
@@ -471,15 +390,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ],
       ),
       actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 8.0),
-          child: IconButton(
+        if (!_isEditing) ...[
+          IconButton(
             icon: Icon(
-              _isEditing ? Icons.save_rounded : Icons.edit_rounded,
+              Icons.edit_rounded,
               color: theme.colorScheme.onPrimary,
               size: 28,
             ),
-            tooltip: _isEditing ? AppLocalizations.of(context)!.save : AppLocalizations.of(context)!.edit,
+            tooltip: AppLocalizations.of(context)!.edit,
             style: IconButton.styleFrom(
               backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
               shape: RoundedRectangleBorder(
@@ -491,22 +409,102 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               minWidth: 40,
               minHeight: 40,
             ),
-            onPressed: _isSaving
-                ? null
-                : () {
-              if (_isEditing) {
-                _saveChanges();
-              } else {
-                setState(() {
-                  _isEditing = true;
-                });
-              }
-            },
+            onPressed: () => setState(() => _isEditing = true),
           ),
-        ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: Icon(
+              Icons.lock_outline_rounded,
+              color: theme.colorScheme.onPrimary,
+              size: 28,
+            ),
+            tooltip: AppLocalizations.of(context)!.changePassword,
+            style: IconButton.styleFrom(
+              backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: EdgeInsets.zero,
+            ),
+            constraints: const BoxConstraints(
+              minWidth: 40,
+              minHeight: 40,
+            ),
+            onPressed: () => _showConfirmationDialog(
+              title: AppLocalizations.of(context)!.changePassword,
+              content: AppLocalizations.of(context)!.changePasswordConfirmation(_emailController.text),
+              onConfirm: () async {
+                await FirebaseAuth.instance.sendPasswordResetEmail(
+                  email: _emailController.text,
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(AppLocalizations.of(context)!.passwordResetEmailSent),
+                    ),
+                  );
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: Icon(
+              Icons.logout_rounded,
+              color: theme.colorScheme.onPrimary,
+              size: 28,
+            ),
+            tooltip: AppLocalizations.of(context)!.logout,
+            style: IconButton.styleFrom(
+              backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: EdgeInsets.zero,
+            ),
+            constraints: const BoxConstraints(
+              minWidth: 40,
+              minHeight: 40,
+            ),
+            onPressed: () => _showConfirmationDialog(
+              title: AppLocalizations.of(context)!.logout,
+              content: AppLocalizations.of(context)!.logoutConfirmation,
+              onConfirm: () async {
+                await AuthService().signOut();
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ),
+        ] else
+          IconButton(
+            icon: Icon(
+              Icons.save_rounded,
+              color: theme.colorScheme.onPrimary,
+              size: 28,
+            ),
+            tooltip: AppLocalizations.of(context)!.save,
+            style: IconButton.styleFrom(
+              backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: EdgeInsets.zero,
+            ),
+            constraints: const BoxConstraints(
+              minWidth: 40,
+              minHeight: 40,
+            ),
+            onPressed: _isSaving ? null : _saveChanges,
+          ),
+        const SizedBox(width: 8),
       ],
     );
   }
+
 
   Widget _buildGameHistory() {
     if (_isLoadingHistory) {
@@ -675,7 +673,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       setState(() {
         _gameHistory.removeWhere((g) => g.id == game.id);
       });
+
       if (mounted) {
+        final appState = Provider.of<MyAppState>(context, listen: false);
+        if (game.id == appState.currentGame.id) {
+          appState.createGame();
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.gameDeleted),
@@ -691,6 +695,112 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         );
       }
     }
+  }
+
+  Future<void> _deleteAccount() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FireStore().deleteUserData(user.uid);
+        await user.delete();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context)!.accountDeleted)),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.errorDeletingAccount(e.toString())),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _reauthenticateUser() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final emailController = TextEditingController(text: user.email);
+    final passwordController = TextEditingController();
+    bool isLoading = false;
+    String? errorMessage;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(AppLocalizations.of(context)!.reauthorizeRequired),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(AppLocalizations.of(context)!.reauthorizeDescription),
+              _buildErrorMessage(errorMessage),
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.email,
+                  enabled: false,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: passwordController,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.password,
+                ),
+                obscureText: true,
+              ),
+              if (isLoading) ...[
+                const SizedBox(height: 16),
+                const CircularProgressIndicator(),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(AppLocalizations.of(context)!.cancel),
+            ),
+            FilledButton(
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                setState(() => isLoading = true);
+                try {
+                  final credential = EmailAuthProvider.credential(
+                    email: emailController.text,
+                    password: passwordController.text,
+                  );
+
+                  await user.reauthenticateWithCredential(credential);
+
+                  await _deleteAccount();
+                  if (context.mounted) {
+                    // Navigeer terug naar login/home
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  }
+                } on FirebaseAuthException catch (e) {
+                  setState(() => isLoading = false);
+                  if (context.mounted) {
+                      errorMessage = (e.code == 'wrong-password' || e.code == 'invalid-credential')
+                              ? AppLocalizations.of(context)!.wrongPassword
+                              : AppLocalizations.of(context)!.reauthorizationFailed;
+                  }
+                }
+              },
+              child: Text(AppLocalizations.of(context)!.confirm),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -713,7 +823,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _buildErrorMessage(),
+                              _buildErrorMessage(_errorMessage),
                               const SizedBox(height: 16),
                               _buildProfileForm(),
                               const SizedBox(height: 16),
@@ -725,25 +835,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         ),
                       ],
                     ),
-                  ),
-                ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
-                  ),
-                ),
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 600),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: _buildActionButtons(),
                   ),
                 ),
               ),
