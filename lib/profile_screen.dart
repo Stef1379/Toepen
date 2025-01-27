@@ -1,15 +1,17 @@
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 
 import 'package:toepen_cardgame/auth/auth_service.dart';
 import 'package:toepen_cardgame/database/firestore.dart';
 import 'package:toepen_cardgame/model/game.dart';
 import 'package:toepen_cardgame/app_state.dart';
+import 'package:toepen_cardgame/ads/load_banner_ad.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -806,6 +808,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: MyBannerAdWidget(adSize: AdSize.banner),
       appBar: _buildAppBar(),
       body: SafeArea(
         child: Column(
