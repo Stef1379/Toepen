@@ -12,7 +12,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:toepen_cardgame/model/player.dart';
 import 'package:toepen_cardgame/profile_screen.dart';
-import 'package:toepen_cardgame/firebase_options.dart';
+import 'package:toepen_cardgame/database/firebase_options.dart';
 import 'package:toepen_cardgame/auth/auth_service.dart';
 import 'package:toepen_cardgame/auth/login_screen.dart';
 import 'package:toepen_cardgame/ads/load_banner_ad.dart';
