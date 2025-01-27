@@ -3,12 +3,14 @@
 *.log
 *.pyc
 *.swp
+*.lock
 .DS_Store
 .atom/
 .buildlog/
 .history
 .svn/
 migrate_working_dir/
+.env
 
 # IntelliJ related
 *.iml
@@ -44,3 +46,5 @@ app.*.map.json
 
 /keystores
 /android/key.properties
+google-services.json
+GoogleService-Info.plist

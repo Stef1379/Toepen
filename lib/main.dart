@@ -23,6 +23,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   unawaited(MobileAds.instance.initialize());
 
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    throw Exception('Error loading .env file: $e');
+  }
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
