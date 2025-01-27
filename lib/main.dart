@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -9,6 +8,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:toepen_cardgame/model/player.dart';
 import 'package:toepen_cardgame/profile_screen.dart';
@@ -22,6 +22,12 @@ import 'package:toepen_cardgame/app_state.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   unawaited(MobileAds.instance.initialize());
+
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    throw Exception('Error loading .env file: $e');
+  }
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
