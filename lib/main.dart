@@ -42,6 +42,8 @@ void main() async {
     throw Exception('Error loading .env file: $e');
   }
 
+  CustomAudioPlayer.loadAudio();
+
   runApp(const MyApp());
 }
 
@@ -91,7 +93,7 @@ class MyApp extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasData) {
-              CustomAudioPlayer.playAudio(AudioPath(Audio.benUWeer).path);
+              CustomAudioPlayer.playAudio(Audio.benUWeer);
               return const TopBar();
             }
             return const LoginScreen();

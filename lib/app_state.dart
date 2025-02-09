@@ -15,6 +15,12 @@ class MyAppState extends ChangeNotifier {
 
   Game currentGame = Game(players: []);
 
+  @override
+  void dispose() {
+    CustomAudioPlayer.releaseAudio();
+    super.dispose();
+  }
+
   MyAppState() {
     saveGameToDatabase(currentGame);
   }
@@ -31,7 +37,7 @@ class MyAppState extends ChangeNotifier {
 
   void addPlayer(String name) async {
     currentGame.addPlayer(name);
-    CustomAudioPlayer.playAudio(AudioPath(Audio.hallo).path);
+    CustomAudioPlayer.playAudio(Audio.hallo);
     notifyListeners();
   }
 
@@ -50,7 +56,7 @@ class MyAppState extends ChangeNotifier {
     if (player == null) return;
     player.addScore();
     currentGame.checkWinner();
-    if (player.isDead()) CustomAudioPlayer.playAudio(AudioPath(chooseRandomAudioSample()).path);
+    if (player.isDead()) CustomAudioPlayer.playAudio(chooseRandomAudioSample());
     notifyListeners();
   }
 

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:audioplayers/audioplayers.dart';
 
 import 'package:toepen_cardgame/database/firestore.dart';
 
@@ -8,7 +7,6 @@ const povertyScore = 14;
 class Player {
   Timer? _scoreUpdateTimer;
   final FireStore fireStore = FireStore();
-  final player = AudioPlayer();
 
   String id = "";
   String gameId = "";

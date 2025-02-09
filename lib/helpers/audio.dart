@@ -22,5 +22,20 @@ extension AudioPath on Audio {
     }
   }
 
+  int get id {
+    switch (this) {
+      case Audio.benUWeer:
+        return 1;
+      case Audio.nuGaatHetGebeuren:
+        return 2;
+      case Audio.hallo:
+        return 3;
+      case Audio.deLul:
+        return 4;
+      case Audio.quack:
+        return 5;
+    }
+  }
+
   String get fullPath => 'assets/$path';
 }

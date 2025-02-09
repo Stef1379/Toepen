@@ -73,7 +73,7 @@ class _DuckAnimationState extends State<DuckAnimation> with SingleTickerProvider
                 bottom: 10,
                 child: GestureDetector(
                   onTap: () {
-                    CustomAudioPlayer.playAudio(AudioPath(Audio.quack).path);
+                    CustomAudioPlayer.playAudio(Audio.quack);
                   },
                   child: Transform.scale(
                       scaleX: _isWalkingRight ? 1 : -1,
