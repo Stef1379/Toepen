@@ -1,11 +1,18 @@
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:toepen_cardgame/model/game.dart';
 import 'package:toepen_cardgame/model/player.dart';
 import 'package:toepen_cardgame/database/firestore.dart';
+import 'package:toepen_cardgame/helpers/custom_audio_player.dart';
+import 'package:toepen_cardgame/helpers/audio.dart';
 
 class MyAppState extends ChangeNotifier {
+  static final _audioSamples = [Audio.nuGaatHetGebeuren, Audio.deLul];
+  static final _random = Random();
+
   Game currentGame = Game(players: []);
 
   MyAppState() {
@@ -22,8 +29,9 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addPlayer(String name) {
+  void addPlayer(String name) async {
     currentGame.addPlayer(name);
+    CustomAudioPlayer.playAudio(AudioPath(Audio.hallo).path);
     notifyListeners();
   }
 
@@ -42,6 +50,7 @@ class MyAppState extends ChangeNotifier {
     if (player == null) return;
     player.addScore();
     currentGame.checkWinner();
+    if (player.isDead()) CustomAudioPlayer.playAudio(AudioPath(chooseRandomAudioSample()).path);
     notifyListeners();
   }
 
@@ -59,5 +68,10 @@ class MyAppState extends ChangeNotifier {
 
   void sortPlayers() {
     currentGame.sortPlayers();
+  }
+
+  Audio chooseRandomAudioSample() {
+    var randomIndex = _random.nextInt(_audioSamples.length);
+    return _audioSamples[randomIndex];
   }
 }

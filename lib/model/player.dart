@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 
 import 'package:toepen_cardgame/database/firestore.dart';
 
@@ -6,7 +7,8 @@ const povertyScore = 14;
 
 class Player {
   Timer? _scoreUpdateTimer;
-  FireStore fireStore = FireStore();
+  final FireStore fireStore = FireStore();
+  final player = AudioPlayer();
 
   String id = "";
   String gameId = "";
@@ -19,19 +21,20 @@ class Player {
   bool isDead() => score > povertyScore;
 
   void addScore() {
-    if (score < 99) {
-      /* isDead must be checked before score++, because then the score will be updated to the actual score a player is pronounced dead. */
-      bool isDead = this.isDead();
-      score++;
-      if (!isDead) _debouncedUpdate();
-    }
+    if (score >= 99) return;
+
+    /* isDead must be checked before score++, because then the score will be updated to the actual score a player is pronounced dead. */
+    bool isDead = this.isDead();
+    score++;
+
+    if (!isDead) _debouncedUpdate();
   }
 
   void subtractScore() {
-    if (score > 0) {
-      score--;
-      if (!isDead()) _debouncedUpdate();
-    }
+    if (score <= 0) return;
+
+    score--;
+    if (!isDead()) _debouncedUpdate();
   }
 
   void _debouncedUpdate() {

@@ -10,12 +10,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'package:toepen_cardgame/helpers/audio.dart';
+import 'package:toepen_cardgame/helpers/custom_audio_player.dart';
+
 import 'package:toepen_cardgame/model/player.dart';
 import 'package:toepen_cardgame/profile_screen.dart';
 import 'package:toepen_cardgame/firebase_options.dart';
 import 'package:toepen_cardgame/auth/auth_service.dart';
 import 'package:toepen_cardgame/auth/login_screen.dart';
-import 'package:toepen_cardgame/ads/load_banner_ad.dart';
+import 'package:toepen_cardgame/duck_animation.dart';
 import 'package:toepen_cardgame/app_state.dart';
 
 
@@ -88,6 +91,7 @@ class MyApp extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasData) {
+              CustomAudioPlayer.playAudio(AudioPath(Audio.benUWeer).path);
               return const TopBar();
             }
             return const LoginScreen();
@@ -414,7 +418,7 @@ class MyHomePage extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      bottomNavigationBar: MyBannerAdWidget(adSize: AdSize.banner),
+      bottomNavigationBar: DuckAnimation(),
       body: players.isEmpty
           ? Center(
         child: Padding(

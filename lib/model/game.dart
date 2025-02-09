@@ -7,7 +7,7 @@ import 'package:toepen_cardgame/model/player.dart';
 class Game {
   List<String>? get defaultPlayerNames => dotenv.env["DEFAULT_PLAYER_NAMES"]?.split(',');
 
-  FireStore fireStore = FireStore();
+  final FireStore fireStore = FireStore();
 
   String id = "";
   List<Player>? players = [];
